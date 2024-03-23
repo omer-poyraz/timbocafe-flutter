@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timboo/widgets.dart';
 
 void main() {
@@ -49,9 +50,32 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  permission() async {
+    var permissionStatus = await Permission.storage.status;
+
+    if (permissionStatus != PermissionStatus.granted) {
+      PermissionStatus permissionStatus = await Permission.storage.request();
+      setState(() {
+        permissionStatus = permissionStatus;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+
+    () async {
+      var permissionStatus = await Permission.storage.status;
+
+      if (permissionStatus != PermissionStatus.granted) {
+        PermissionStatus permissionStatus = await Permission.storage.request();
+        setState(() {
+          permissionStatus = permissionStatus;
+        });
+      }
+    }();
+
     createFolder();
 
     Future.delayed(const Duration(milliseconds: 1), () {

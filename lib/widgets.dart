@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+// import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/api.dart';
 import 'package:timboo/homepage.dart';
@@ -97,16 +98,9 @@ loginControl(BuildContext context, String userName, String password) async {
 }
 
 Future createFolder() async {
-  final dir = Directory('/sdcard/Documents');
-  var status = await Permission.storage.status;
-  if (!status.isGranted) {
-    await Permission.storage.request();
-  }
-  if ((await dir.exists())) {
-    return dir.path;
-  } else {
-    dir.create();
-    return dir.path;
+  var dir = await getExternalStorageDirectory();
+  if (!Directory("${dir!.path}/teknobay").existsSync()) {
+    Directory("${dir.path}/teknobay").createSync(recursive: true);
   }
 }
 

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';
@@ -25,8 +25,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     parent: _controller,
     curve: Curves.elasticOut,
   );
-  final File myFile = File('/sdcard/Documents/data.json');
-  late PermissionStatus permissionStatus;
   var isLoading = true;
   var isDeleting = false;
   late int percentage = 0;
@@ -48,13 +46,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future downloadFile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Dio dio = Dio();
-    final dir = Directory('/sdcard/Documents');
+    var dir2 = await getExternalStorageDirectory();
+    final dir = Directory("${dir2!.path}/teknobay");
 
     files = io.Directory(dir.path).listSync();
 
     await dio.download('https://www.timboocafe.com/VideoGetir.aspx',
-        '/sdcard/Documents/data.json');
-    final File myFile = File('/sdcard/Documents/data.json');
+        '${dir2.path}/teknobay/data.json');
+    final File myFile = File('${dir2.path}/teknobay/data.json');
     jsonData = json.decode(myFile.readAsStringSync());
 
     if (jsonData.length != 0) {
@@ -88,9 +87,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           var subValue = value.substring(54);
           var videoValue = jsonData[i]['Dosya'].toString().split(',');
 
-          if (!File('/sdcard/Documents/$subValue').existsSync()) {
+          if (!File('${dir2.path}/teknobay/$subValue').existsSync()) {
             await dio.download('https://www.timboocafe.com/$value',
-                '/sdcard/Documents/$subValue',
+                '${dir2.path}/teknobay/$subValue',
                 onReceiveProgress: ((count, total) {
               setState(() {
                 percentage = ((count / total) * 100).floor();
@@ -108,7 +107,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           for (int j = 0; j < videoValue.length; j++) {
             debugPrint('Film adı: ${videoValue[j].substring(35)}');
             debugPrint(
-                'Film durumu: ${File('/sdcard/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
+                'Film durumu: ${File('${dir2.path}/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
 
             var newFile = prefs.getBool(videoValue[j].substring(35));
             debugPrint("true&false");
@@ -121,7 +120,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
               await dio.download(
                 'https://www.timboocafe.com/${videoValue[j]}',
-                '/sdcard/Documents/${videoValue[j].substring(35)}',
+                '${dir2.path}/teknobay/${videoValue[j].substring(35)}',
                 onReceiveProgress: ((count, total) {
                   setState(() {
                     filesName = videoValue[j].substring(35);
@@ -158,28 +157,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
     ]);
-    () async {
-      permissionStatus = await Permission.storage.status;
 
-      if (permissionStatus != PermissionStatus.granted) {
-        PermissionStatus permissionStatus = await Permission.storage.request();
-        setState(() {
-          permissionStatus = permissionStatus;
-        });
-      }
-    }();
-
-    try {
-      final path = Directory("/sdcard/Documents");
-      if ((path.existsSync())) {
-        debugPrint("exist");
-      } else {
-        debugPrint("not exist");
-        path.create();
-      }
-    } catch (e) {
-      debugPrint('Create Folder Catch: $e');
-    }
     downloadFile();
   }
 

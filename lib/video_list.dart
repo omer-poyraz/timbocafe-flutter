@@ -1,8 +1,6 @@
-// ignore_for_file: prefer_typing_uninitialized_variables
-
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:timboo/homepage.dart';
 import 'package:timboo/widgets.dart';
 import 'media_player.dart';
@@ -16,13 +14,15 @@ class VideoList extends StatefulWidget {
 }
 
 class _VideoListState extends State<VideoList> {
-  final File myFile = File('/sdcard/Documents/data.json');
   List<dynamic> listData = [];
   var videoLength = 0;
+  var newPath = "";
   var controller;
-  late PermissionStatus permissionStatus;
 
   Future<List<dynamic>> fileRead() async {
+    var dir2 = await getExternalStorageDirectory();
+    newPath = "${dir2!.path}/teknobay";
+    final File myFile = File('${dir2.path}/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
     listData = jsonData;
     return listData;
@@ -37,17 +37,6 @@ class _VideoListState extends State<VideoList> {
     ]);
     createFolder();
     fileRead();
-
-    () async {
-      permissionStatus = await Permission.storage.status;
-
-      if (permissionStatus != PermissionStatus.granted) {
-        PermissionStatus permissionStatus = await Permission.storage.request();
-        setState(() {
-          permissionStatus = permissionStatus;
-        });
-      }
-    }();
   }
 
   @override
@@ -191,8 +180,7 @@ class _VideoListState extends State<VideoList> {
           child: Column(
             children: [
               Image(
-                image:
-                    FileImage(File('/sdcard/Documents/${path.substring(54)}')),
+                image: FileImage(File('$newPath/${path.substring(54)}')),
                 width: MediaQuery.of(context).size.width / 6,
                 height: MediaQuery.of(context).size.height / 3.2,
               ),

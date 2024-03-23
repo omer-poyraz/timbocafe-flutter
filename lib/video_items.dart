@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';
 import 'package:video_player/video_player.dart';
@@ -27,11 +28,12 @@ class VideoItems extends StatefulWidget {
 class _VideoItemsState extends State<VideoItems> {
   late ChewieController _chewieController;
   late List<ChewieController> newChewieController;
-  final File myFile = File('/sdcard/Documents/data.json');
   List<dynamic> listData = [];
   var indexNumber = 0;
 
   Future<List<dynamic>> fileRead() async {
+    var dir2 = await getExternalStorageDirectory();
+    final File myFile = File('${dir2!.path}/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
     listData = jsonData;
     debugPrint(listData.toString());
