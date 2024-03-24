@@ -96,6 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                           'Giriş Yap',
                           style: TextStyle(
                             fontSize: 25,
+                            color: Colors.white,
                             fontFamily: 'VAGRoundedStd',
                           ),
                         ),

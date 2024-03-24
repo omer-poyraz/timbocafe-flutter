@@ -26,10 +26,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     curve: Curves.elasticOut,
   );
   var isLoading = true;
+  var isLoading2 = false;
   var isDeleting = false;
   late int percentage = 0;
-  var jsonData;
-  var files;
+  dynamic jsonData;
+  dynamic files;
   var filesName = "";
   var jsonDataList = [];
   var fileList = [];
@@ -147,6 +148,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     }
     debugPrint(jsonDataList.toString());
+    setState(() {
+      isLoading2 = true;
+    });
   }
 
   @override
@@ -238,96 +242,98 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Positioned(
             bottom: MediaQuery.of(context).size.height / 9.5,
             right: MediaQuery.of(context).size.width / 2.2,
-            child: Row(
-              children: [
-                InkWell(
-                  onTap: () {
-                    // if (isLoading) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VideoList(),
+            child: isLoading2
+                ? Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          // if (isLoading) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VideoList(),
+                            ),
+                          );
+                          // } else {
+                          //   showDialog(
+                          //     context: context,
+                          //     builder: (BuildContext context) => AlertDialog(
+                          //       title: const Text('Lütfen Bekleyiniz!'),
+                          //       content: const Text(
+                          //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
+                          //       actions: <Widget>[
+                          //         ElevatedButton(
+                          //           onPressed: () => Navigator.pop(context, 'Tamam'),
+                          //           child: const Text('Tamam'),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   );
+                          // }
+                        },
+                        child: RotationTransition(
+                          turns: _animation,
+                          child: const Text(
+                            'TR',
+                            style: TextStyle(
+                              fontFamily: 'VAGRoundedStd',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 30,
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-                    // } else {
-                    //   showDialog(
-                    //     context: context,
-                    //     builder: (BuildContext context) => AlertDialog(
-                    //       title: const Text('Lütfen Bekleyiniz!'),
-                    //       content: const Text(
-                    //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
-                    //       actions: <Widget>[
-                    //         ElevatedButton(
-                    //           onPressed: () => Navigator.pop(context, 'Tamam'),
-                    //           child: const Text('Tamam'),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   );
-                    // }
-                  },
-                  child: RotationTransition(
-                    turns: _animation,
-                    child: const Text(
-                      'TR',
-                      style: TextStyle(
-                        fontFamily: 'VAGRoundedStd',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 30,
+                      betweenSpace,
+                      const Text(
+                        '/',
+                        style: TextStyle(
+                          fontFamily: 'VAGRoundedStd',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 30,
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                betweenSpace,
-                const Text(
-                  '/',
-                  style: TextStyle(
-                    fontFamily: 'VAGRoundedStd',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 30,
-                  ),
-                ),
-                betweenSpace,
-                InkWell(
-                  onTap: () {
-                    // if (isLoading) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VideoList(),
+                      betweenSpace,
+                      InkWell(
+                        onTap: () {
+                          // if (isLoading) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VideoList(),
+                            ),
+                          );
+                          // } else {
+                          //   showDialog(
+                          //     context: context,
+                          //     builder: (BuildContext context) => AlertDialog(
+                          //       title: const Text('Lütfen Bekleyiniz!'),
+                          //       content: const Text(
+                          //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
+                          //       actions: <Widget>[
+                          //         ElevatedButton(
+                          //           onPressed: () => Navigator.pop(context, 'Tamam'),
+                          //           child: const Text('Tamam'),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   );
+                          // }
+                        },
+                        child: RotationTransition(
+                          turns: _animation,
+                          child: const Text(
+                            'EN',
+                            style: TextStyle(
+                              fontFamily: 'VAGRoundedStd',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 30,
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-                    // } else {
-                    //   showDialog(
-                    //     context: context,
-                    //     builder: (BuildContext context) => AlertDialog(
-                    //       title: const Text('Lütfen Bekleyiniz!'),
-                    //       content: const Text(
-                    //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
-                    //       actions: <Widget>[
-                    //         ElevatedButton(
-                    //           onPressed: () => Navigator.pop(context, 'Tamam'),
-                    //           child: const Text('Tamam'),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   );
-                    // }
-                  },
-                  child: RotationTransition(
-                    turns: _animation,
-                    child: const Text(
-                      'EN',
-                      style: TextStyle(
-                        fontFamily: 'VAGRoundedStd',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 30,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                    ],
+                  )
+                : const Center(child: CircularProgressIndicator()),
           ),
         ],
       ),

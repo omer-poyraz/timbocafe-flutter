@@ -17,15 +17,14 @@ class _VideoListState extends State<VideoList> {
   List<dynamic> listData = [];
   var videoLength = 0;
   var newPath = "";
-  var controller;
+  dynamic controller;
 
-  Future<List<dynamic>> fileRead() async {
+  fileRead() async {
     var dir2 = await getExternalStorageDirectory();
     newPath = "${dir2!.path}/teknobay";
     final File myFile = File('${dir2.path}/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
     listData = jsonData;
-    return listData;
   }
 
   @override
@@ -41,6 +40,7 @@ class _VideoListState extends State<VideoList> {
 
   @override
   void dispose() {
+    fileRead();
     controller.dispose();
     super.dispose();
   }
@@ -95,65 +95,69 @@ class _VideoListState extends State<VideoList> {
       ),
       body: Container(
         color: Colors.amber[100],
-        child: GridView.builder(
-          // physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 400,
-            childAspectRatio: 6 / 2,
-            crossAxisSpacing: 0,
-            mainAxisSpacing: 0,
-            mainAxisExtent: 330,
-          ),
-          itemCount: listData.length,
-          itemBuilder: (context, index) {
-            var dosyaRenk = listData[index]['DosyaRenk'].toString();
-            dynamic dosyaRenk2;
-            dynamic dosyaRenk3;
-            dynamic dosyaRenkLength;
+        child: FutureBuilder(
+          future: fileRead(),
+          builder: (context, snapshot) {
+            debugPrint(snapshot.data.toString());
+            return GridView.builder(
+              // physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8.0,
+                crossAxisSpacing: 8.0,
+              ),
+              itemCount: listData.length,
+              itemBuilder: (context, index) {
+                var dosyaRenk = listData[index]['DosyaRenk'].toString();
+                dynamic dosyaRenk2;
+                dynamic dosyaRenk3;
+                dynamic dosyaRenkLength;
 
-            if (listData[index]['DosyaRenk'] != null) {
-              dosyaRenkLength = dosyaRenk.length;
-              dosyaRenk2 = dosyaRenk.substring(5, dosyaRenkLength - 1);
-              dosyaRenk3 = dosyaRenk2.split(',');
-            }
+                if (listData[index]['DosyaRenk'] != null) {
+                  dosyaRenkLength = dosyaRenk.length;
+                  dosyaRenk2 = dosyaRenk.substring(5, dosyaRenkLength - 1);
+                  dosyaRenk3 = dosyaRenk2.split(',');
+                }
 
-            return listData[index]['DosyaResim'] != null
-                ? videoCard(
-                    context,
-                    listData[index]['DosyaResim'],
-                    listData[index]['Dosya'].toString().split(','),
-                    listData[index]['Icerik_Baslik'],
-                    listData[index]['DosyaRenk'] == null
-                        ? const Color.fromARGB(255, 44, 93, 53)
-                        : Color.fromARGB(
-                            int.parse(dosyaRenk3[0]),
-                            int.parse(dosyaRenk3[1]),
-                            int.parse(dosyaRenk3[2]),
-                            int.parse(dosyaRenk3[3]),
-                          ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Image(
-                        image: AssetImage('assets/initial.jpg'),
-                        width: 150,
-                      ),
-                      bottomSpaceeee,
-                      bottomSpaceeee,
-                      Text(
+                return listData[index]['DosyaResim'] != null
+                    ? videoCard(
+                        context,
+                        listData[index]['DosyaResim'],
+                        listData[index]['Dosya'].toString().split(','),
                         listData[index]['Icerik_Baslik'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'VAGRoundedStd',
-                          fontSize: 23,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  );
+                        listData[index]['DosyaRenk'] == null
+                            ? const Color.fromARGB(255, 44, 93, 53)
+                            : Color.fromARGB(
+                                int.parse(dosyaRenk3[0]),
+                                int.parse(dosyaRenk3[1]),
+                                int.parse(dosyaRenk3[2]),
+                                int.parse(dosyaRenk3[3]),
+                              ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Image(
+                            image: AssetImage('assets/initial.jpg'),
+                            width: 150,
+                          ),
+                          bottomSpaceeee,
+                          bottomSpaceeee,
+                          Text(
+                            listData[index]['Icerik_Baslik'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'VAGRoundedStd',
+                              fontSize: 23,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      );
+              },
+            );
           },
         ),
       ),

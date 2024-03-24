@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:timboo/video_items.dart';
 import 'package:video_player/video_player.dart';
@@ -14,7 +13,7 @@ class MediaPlayer extends StatefulWidget {
 }
 
 class _MediaPlayerState extends State<MediaPlayer> {
-  var controller;
+  dynamic controller;
   late List<VideoPlayerController> newList = [];
 
   void changeVideo(File file) {
@@ -43,11 +42,6 @@ class _MediaPlayerState extends State<MediaPlayer> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
-
     newmethod();
   }
 
