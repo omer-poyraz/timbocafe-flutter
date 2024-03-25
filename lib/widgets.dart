@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/api.dart';
 import 'package:timboo/homepage.dart';
@@ -99,9 +100,11 @@ loginControl(BuildContext context, String userName, String password) async {
 }
 
 Future createFolder() async {
-  var dir = await getExternalStorageDirectory();
-  if (!Directory("${dir!.path}/teknobay").existsSync()) {
-    Directory("${dir.path}/teknobay").createSync(recursive: true);
+  var storage = await PathProviderEx2.getStorageInfo();
+  var rootDir = storage[1].rootDir;
+  var drc = Directory("$rootDir/Documents");
+  if (!drc.existsSync()) {
+    drc.createSync(recursive: true);
   }
 }
 

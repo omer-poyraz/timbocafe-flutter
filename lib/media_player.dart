@@ -1,4 +1,5 @@
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_items.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
@@ -31,11 +32,12 @@ class _MediaPlayerState extends State<MediaPlayer> {
   }
 
   newmethod() async {
-    var dir2 = await getExternalStorageDirectory();
+    var storage = await PathProviderEx2.getStorageInfo();
+    var rootDir = storage[1].rootDir;
 
     for (int i = 0; i < widget.videoName.length; i++) {
       changeVideo(
-          File('${dir2!.path}/teknobay/${widget.videoName[i].substring(35)}'));
+          File('$rootDir/Documents/${widget.videoName[i].substring(35)}'));
     }
   }
 

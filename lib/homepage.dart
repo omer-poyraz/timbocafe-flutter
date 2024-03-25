@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';
@@ -47,14 +48,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future downloadFile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Dio dio = Dio();
-    var dir2 = await getExternalStorageDirectory();
-    final dir = Directory("${dir2!.path}/teknobay");
+    var storage = await PathProviderEx2.getStorageInfo();
+    var rootDir = storage[1].rootDir;
+    var drc = Directory("$rootDir/Documents");
 
-    files = io.Directory(dir.path).listSync();
+    files = io.Directory(drc.path).listSync();
 
     await dio.download('https://www.timboocafe.com/VideoGetir.aspx',
-        '${dir2.path}/teknobay/data.json');
-    final File myFile = File('${dir2.path}/teknobay/data.json');
+        '$rootDir/Documents/data.json');
+    final File myFile = File('$rootDir/Documents/data.json');
     jsonData = json.decode(myFile.readAsStringSync());
 
     if (jsonData.length != 0) {
@@ -88,9 +90,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           var subValue = value.substring(54);
           var videoValue = jsonData[i]['Dosya'].toString().split(',');
 
-          if (!File('${dir2.path}/teknobay/$subValue').existsSync()) {
+          if (!File('$rootDir/Documents/$subValue').existsSync()) {
             await dio.download('https://www.timboocafe.com/$value',
-                '${dir2.path}/teknobay/$subValue',
+                '$rootDir/Documents/$subValue',
                 onReceiveProgress: ((count, total) {
               setState(() {
                 percentage = ((count / total) * 100).floor();
@@ -108,7 +110,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           for (int j = 0; j < videoValue.length; j++) {
             debugPrint('Film adı: ${videoValue[j].substring(35)}');
             debugPrint(
-                'Film durumu: ${File('${dir2.path}/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
+                'Film durumu: ${File('$rootDir/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
 
             var newFile = prefs.getBool(videoValue[j].substring(35));
             debugPrint("true&false");
@@ -121,7 +123,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
               await dio.download(
                 'https://www.timboocafe.com/${videoValue[j]}',
-                '${dir2.path}/teknobay/${videoValue[j].substring(35)}',
+                '$rootDir/Documents/${videoValue[j].substring(35)}',
                 onReceiveProgress: ((count, total) {
                   setState(() {
                     filesName = videoValue[j].substring(35);

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/homepage.dart';
 import 'package:timboo/widgets.dart';
 import 'media_player.dart';
@@ -20,9 +21,10 @@ class _VideoListState extends State<VideoList> {
   dynamic controller;
 
   fileRead() async {
-    var dir2 = await getExternalStorageDirectory();
-    newPath = "${dir2!.path}/teknobay";
-    final File myFile = File('${dir2.path}/teknobay/data.json');
+    var storage = await PathProviderEx2.getStorageInfo();
+    var rootDir = storage[1].rootDir;
+    newPath = "$rootDir/Documents";
+    final File myFile = File('$rootDir/Documents/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
     listData = jsonData;
   }

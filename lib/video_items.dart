@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';
 import 'package:flutter/material.dart';
@@ -34,8 +35,9 @@ class _VideoItemsState extends State<VideoItems> {
 
   void newmethod() async {
     var newList = [];
-    var dir2 = await getExternalStorageDirectory();
-    final File myFile = File('${dir2!.path}/teknobay/data.json');
+    var storage = await PathProviderEx2.getStorageInfo();
+    var rootDir = storage[1].rootDir;
+    final File myFile = File('$rootDir/Documents/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
     for (var j = 0; j < jsonData.length; j++) {
@@ -50,7 +52,7 @@ class _VideoItemsState extends State<VideoItems> {
 
         for (int i = 0; i < videoName.length; i++) {
           controller = VideoPlayerController.file(
-              File('${dir2.path}/teknobay/${videoName[i]}'))
+              File('$rootDir/Documents/${videoName[i]}'))
             // ..setLooping(true)
             ..initialize().then((_) {
               setState(() {});
@@ -107,8 +109,9 @@ class _VideoItemsState extends State<VideoItems> {
 
   Future<List<Widget>> getList() async {
     List<Widget> childs = [];
-    var dir2 = await getExternalStorageDirectory();
-    final File myFile = File('${dir2!.path}/teknobay/data.json');
+    var storage = await PathProviderEx2.getStorageInfo();
+    var rootDir = storage[1].rootDir;
+    final File myFile = File('$rootDir/Documents/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
     // for (var i = 0; i < newChewieController.length; i++) {
