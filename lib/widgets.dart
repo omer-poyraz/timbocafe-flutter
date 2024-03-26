@@ -2,7 +2,6 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/api.dart';

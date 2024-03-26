@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
@@ -51,7 +50,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     var storage = await PathProviderEx2.getStorageInfo();
     var rootDir = storage[1].rootDir;
     var drc = Directory("$rootDir/Documents");
-
+    // /storage/5FDB-C5C1/Documents
     files = io.Directory(drc.path).listSync();
 
     await dio.download('https://www.timboocafe.com/VideoGetir.aspx',

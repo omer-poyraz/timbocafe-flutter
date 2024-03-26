@@ -1,4 +1,3 @@
-import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_items.dart';
 import 'package:video_player/video_player.dart';

@@ -67,11 +67,19 @@ class _HomeState extends State<Home> {
 
     () async {
       var permissionStatus = await Permission.storage.status;
+      var permissionStatus2 = await Permission.manageExternalStorage.request();
 
       if (permissionStatus != PermissionStatus.granted) {
         PermissionStatus permissionStatus = await Permission.storage.request();
         setState(() {
           permissionStatus = permissionStatus;
+        });
+      }
+      if (permissionStatus2 != PermissionStatus.granted) {
+        PermissionStatus permissionStatus2 =
+            await Permission.manageExternalStorage.request();
+        setState(() {
+          permissionStatus2 = permissionStatus2;
         });
       }
     }();
