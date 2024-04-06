@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
 import 'package:timboo/widgets.dart';
 import 'package:flutter/material.dart';
@@ -30,9 +31,14 @@ class _VideoItemsState extends State<VideoItems> {
   late List widgetList = [];
   late List newList2 = [];
   var indexNumber = 0;
+  var lang = "TR";
   dynamic controller;
 
   void newmethod() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      lang = prefs.getString("lang")!;
+    });
     var newList = [];
     var storage = await PathProviderEx2.getStorageInfo();
     var rootDir = storage[1].rootDir;
@@ -40,9 +46,12 @@ class _VideoItemsState extends State<VideoItems> {
     var jsonData = json.decode(myFile.readAsStringSync());
 
     for (var j = 0; j < jsonData.length; j++) {
-      if (jsonData[j]['Icerik_Baslik'] == widget.title) {
+      if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
+          widget.title) {
         var videoList = [];
-        var videos = jsonData[j]['Dosya'].toString().split(",");
+        var videos = jsonData[j][lang == 'TR' ? 'Dosya' : 'DosyaEn']
+            .toString()
+            .split(",");
         for (var k = 0; k < videos.length; k++) {
           videoList.add(
               videos[k].replaceAll("Webkontrol/IcerikYonetimi/Dosyalar/", ""));
@@ -69,10 +78,10 @@ class _VideoItemsState extends State<VideoItems> {
             zoomAndPan: true,
             useRootNavigator: true,
             errorBuilder: (context, errorMessage) {
-              return Center(
+              return const Center(
                 child: Text(
-                  errorMessage,
-                  style: const TextStyle(
+                  "Hatalı bir video! Lütfen yeniden yükleyiniz!",
+                  style: TextStyle(
                     color: Colors.red,
                     fontFamily: 'VAGRoundedStd',
                   ),
@@ -115,8 +124,11 @@ class _VideoItemsState extends State<VideoItems> {
 
     // for (var i = 0; i < newChewieController.length; i++) {
     for (var j = 0; j < jsonData.length; j++) {
-      if (jsonData[j]['Icerik_Baslik'] == widget.title) {
-        var newList = jsonData[j]['Dosya'].toString().split(',');
+      if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
+          widget.title) {
+        var newList = jsonData[j][lang == 'TR' ? 'Dosya' : 'DosyaEn']
+            .toString()
+            .split(',');
         for (var z = 0; z < newList.length; z++) {
           childs.add(InkWell(
             onTap: () {

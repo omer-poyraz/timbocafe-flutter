@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/homepage.dart';
 import 'package:timboo/widgets.dart';
 import 'media_player.dart';
@@ -17,15 +18,34 @@ class _VideoListState extends State<VideoList> {
   List<dynamic> listData = [];
   var videoLength = 0;
   var newPath = "";
+  var lang = "TR";
   dynamic controller;
 
   fileRead() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      lang = prefs.getString("lang")!;
+    });
+    final newList = [];
     var storage = await PathProviderEx2.getStorageInfo();
     var rootDir = storage[1].rootDir;
     newPath = "$rootDir/Documents";
     final File myFile = File('$rootDir/Documents/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
-    listData = jsonData;
+
+    for (var i = 0; i < jsonData.length; i++) {
+      if (lang == "TR") {
+        if (jsonData[i]["Dosya"] != null) {
+          newList.add(jsonData[i]);
+        }
+      } else {
+        if (jsonData[i]["DosyaEn"] != null) {
+          newList.add(jsonData[i]);
+        }
+      }
+    }
+
+    listData = newList;
   }
 
   @override
@@ -126,7 +146,9 @@ class _VideoListState extends State<VideoList> {
                         context,
                         listData[index]['DosyaResim'],
                         listData[index]['Dosya'].toString().split(','),
-                        listData[index]['Icerik_Baslik'],
+                        listData[index][lang == "TR"
+                            ? 'Icerik_Baslik'
+                            : 'Icerik_KisaAciklama'],
                         listData[index]['DosyaRenk'] == null
                             ? const Color.fromARGB(255, 44, 93, 53)
                             : Color.fromARGB(
@@ -147,7 +169,9 @@ class _VideoListState extends State<VideoList> {
                           bottomSpaceeee,
                           bottomSpaceeee,
                           Text(
-                            listData[index]['Icerik_Baslik'],
+                            listData[index][lang == "TR"
+                                ? 'Icerik_Baslik'
+                                : 'Icerik_KisaAciklama'],
                             style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               fontFamily: 'VAGRoundedStd',

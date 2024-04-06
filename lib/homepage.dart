@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   dynamic files;
   var filesName = "";
   var jsonDataList = [];
+  var jsonDataListEn = [];
   var fileList = [];
   String progressString = 'Dosya İndirilmedi!!!';
   bool didDownloadPDF = false;
@@ -61,20 +62,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (jsonData.length != 0) {
       for (var i = 0; i < jsonData.length; i++) {
         var videoValues = jsonData[i]['Dosya'].toString().split(',');
+        var videoValuesEn = jsonData[i]['DosyaEn'].toString().split(',');
         for (var j = 0; j < videoValues.length; j++) {
           if (videoValues[j].isNotEmpty) {
             jsonDataList.add(videoValues[j].split('/').last);
+          }
+        }
+        for (var j = 0; j < videoValuesEn.length; j++) {
+          if (videoValuesEn[j].isNotEmpty) {
+            jsonDataListEn.add(videoValuesEn[j].split('/').last);
           }
         }
       }
       for (var j = 0; j < files.length; j++) {
         fileList.add(files[j].path.split('/').last);
       }
+
       // fazla olan dosyaları silme
       for (var j = 0; j < fileList.length; j++) {
         var isFile = jsonDataList.indexOf(fileList[j]);
-        if (isFile < 0) {
-          if (files[j].path.toString().split(".").last != "json") {
+        var isFileEn = jsonDataListEn.indexOf(fileList[j]);
+        if (isFile < 0 && isFileEn < 0) {
+          if (files[j].path.toString().split(".").last != "json" &&
+              files[j].path.toString().split(".").last != "png" &&
+              files[j].path.toString().split(".").last != "jpg" &&
+              files[j].path.toString().split(".").last != "jpeg") {
             debugPrint("Dosya silindi!  (${fileList[j]})");
             files[j].delete();
             prefs.setBool(fileList[j], false);
@@ -84,11 +96,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       // olmayan dosyaları indirme
       for (var i = 0; i < jsonData.length; i++) {
+        // Türkçe Videoları İndirme
         if (jsonData[i]['Dosya'] != null && jsonData[i]['DosyaResim'] != null) {
           var value = jsonData[i]['DosyaResim'].toString();
           var subValue = value.substring(54);
           var videoValue = jsonData[i]['Dosya'].toString().split(',');
 
+          // Dosya Resimleri İndirme
           if (!File('$rootDir/Documents/$subValue').existsSync()) {
             await dio.download('https://www.timboocafe.com/$value',
                 '$rootDir/Documents/$subValue',
@@ -105,17 +119,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               isLoading = true;
             });
           }
+          // Dosya Resimleri İndirme Bitiş
 
           for (int j = 0; j < videoValue.length; j++) {
+            debugPrint("-------------------------------");
             debugPrint('Film adı: ${videoValue[j].substring(35)}');
             debugPrint(
                 'Film durumu: ${File('$rootDir/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
 
-            var newFile = prefs.getBool(videoValue[j].substring(35));
-            debugPrint("true&false");
-            debugPrint(newFile.toString());
-
-            if (newFile == false || newFile == null) {
+            if (!File('$rootDir/Documents/${videoValue[j].substring(35)}')
+                .existsSync()) {
               prefs.setBool(videoValue[j].split('/').last, false);
               setState(() {
                 isLoading = false;
@@ -143,12 +156,75 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
           }
         }
+        // Türkçe Videoları İndirme Bitiş
+
+        // İngilizce Videoları İndirme
+        if (jsonData[i]['DosyaEn'] != null &&
+            jsonData[i]['DosyaResim'] != null) {
+          var value = jsonData[i]['DosyaResim'].toString();
+          var subValue = value.substring(54);
+          var videoValue = jsonData[i]['DosyaEn'].toString().split(',');
+
+          // Dosya Resimleri İndirme
+          if (!File('$rootDir/Documents/$subValue').existsSync()) {
+            await dio.download('https://www.timboocafe.com/$value',
+                '$rootDir/Documents/$subValue',
+                onReceiveProgress: ((count, total) {
+              setState(() {
+                percentage = ((count / total) * 100).floor();
+              });
+            }));
+            setState(() {
+              isLoading = false;
+            });
+          } else {
+            setState(() {
+              isLoading = true;
+            });
+          }
+          // Dosya Resimleri İndirme Bitiş
+
+          for (int j = 0; j < videoValue.length; j++) {
+            debugPrint("-------------------------------");
+            debugPrint('Film adı: ${videoValue[j].substring(35)}');
+            debugPrint(
+                'Film durumu: ${File('$rootDir/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
+
+            if (!File('$rootDir/Documents/${videoValue[j].substring(35)}')
+                .existsSync()) {
+              prefs.setBool(videoValue[j].split('/').last, false);
+              setState(() {
+                isLoading = false;
+              });
+              await dio.download(
+                'https://www.timboocafe.com/${videoValue[j]}',
+                '$rootDir/Documents/${videoValue[j].substring(35)}',
+                onReceiveProgress: ((count, total) {
+                  setState(() {
+                    filesName = videoValue[j].substring(35);
+                    percentage = ((count / total) * 100).floor();
+                    if (percentage == 100) {
+                      prefs.setBool(videoValue[j].split('/').last, true);
+                      setState(() {
+                        isLoading = true;
+                      });
+                    }
+                  });
+                }),
+              );
+            } else {
+              setState(() {
+                isLoading = true;
+              });
+            }
+          }
+        }
+        // İngilizce Videoları İndirme Bitiş
       }
       setState(() {
         isLoading = true;
       });
     }
-    debugPrint(jsonDataList.toString());
     setState(() {
       isLoading2 = true;
     });
@@ -248,29 +324,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     children: [
                       InkWell(
                         onTap: () {
-                          // if (isLoading) {
+                          saveLanguage("TR");
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const VideoList(),
                             ),
                           );
-                          // } else {
-                          //   showDialog(
-                          //     context: context,
-                          //     builder: (BuildContext context) => AlertDialog(
-                          //       title: const Text('Lütfen Bekleyiniz!'),
-                          //       content: const Text(
-                          //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
-                          //       actions: <Widget>[
-                          //         ElevatedButton(
-                          //           onPressed: () => Navigator.pop(context, 'Tamam'),
-                          //           child: const Text('Tamam'),
-                          //         ),
-                          //       ],
-                          //     ),
-                          //   );
-                          // }
                         },
                         child: RotationTransition(
                           turns: _animation,
@@ -296,29 +356,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       betweenSpace,
                       InkWell(
                         onTap: () {
-                          // if (isLoading) {
+                          saveLanguage("EN");
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const VideoList(),
                             ),
                           );
-                          // } else {
-                          //   showDialog(
-                          //     context: context,
-                          //     builder: (BuildContext context) => AlertDialog(
-                          //       title: const Text('Lütfen Bekleyiniz!'),
-                          //       content: const Text(
-                          //           'Filmleriniz yükleniyor. Filmleriniz tamamen yüklendiğinde devam edebilirsiniz.'),
-                          //       actions: <Widget>[
-                          //         ElevatedButton(
-                          //           onPressed: () => Navigator.pop(context, 'Tamam'),
-                          //           child: const Text('Tamam'),
-                          //         ),
-                          //       ],
-                          //     ),
-                          //   );
-                          // }
                         },
                         child: RotationTransition(
                           turns: _animation,
@@ -339,5 +383,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  void saveLanguage(String lang) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("lang", lang);
   }
 }
