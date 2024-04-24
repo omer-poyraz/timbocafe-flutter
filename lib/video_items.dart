@@ -78,10 +78,12 @@ class _VideoItemsState extends State<VideoItems> {
             zoomAndPan: true,
             useRootNavigator: true,
             errorBuilder: (context, errorMessage) {
-              return const Center(
+              return Center(
                 child: Text(
-                  "Hatalı bir video! Lütfen yeniden yükleyiniz!",
-                  style: TextStyle(
+                  lang == 'TR'
+                      ? "Hatalı bir video! Lütfen yeniden yükleyiniz!"
+                      : "Faulty video! Please re-upload!",
+                  style: const TextStyle(
                     color: Colors.red,
                     fontFamily: 'VAGRoundedStd',
                   ),
@@ -180,15 +182,15 @@ class _VideoItemsState extends State<VideoItems> {
                             newChewieController[indexNumber].play();
                           });
                         },
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.chevron_left,
                               color: Colors.orange,
                             ),
                             Text(
-                              "Önceki Video",
-                              style: TextStyle(
+                              lang == 'TR' ? "Önceki Video" : "Previous Video",
+                              style: const TextStyle(
                                 fontFamily: 'VAGRoundedStd',
                                 fontSize: 20,
                                 color: Colors.orange,
@@ -220,17 +222,17 @@ class _VideoItemsState extends State<VideoItems> {
                                 "Birrrrrrrr hataaaaa varrrrrrrr : ${e.toString()}");
                           }
                         },
-                        child: const Row(
+                        child: Row(
                           children: [
                             Text(
-                              "Sonraki Video",
-                              style: TextStyle(
+                              lang == 'TR' ? "Sonraki Video" : "Next Video",
+                              style: const TextStyle(
                                 fontFamily: 'VAGRoundedStd',
                                 fontSize: 20,
                                 color: Colors.orange,
                               ),
                             ),
-                            Icon(
+                            const Icon(
                               Icons.chevron_right,
                               color: Colors.orange,
                             ),
@@ -262,13 +264,13 @@ class _VideoItemsState extends State<VideoItems> {
                   MaterialPageRoute(builder: (context) => const VideoList()),
                 );
               },
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.view_list_rounded, color: Colors.orange),
-                  SizedBox(width: 10),
+                  const Icon(Icons.view_list_rounded, color: Colors.orange),
+                  const SizedBox(width: 10),
                   Text(
-                    'Video Listesi',
-                    style: TextStyle(color: Colors.orange),
+                    lang == 'TR' ? 'Video Listesi' : 'Video List',
+                    style: const TextStyle(color: Colors.orange),
                   ),
                 ],
               ),

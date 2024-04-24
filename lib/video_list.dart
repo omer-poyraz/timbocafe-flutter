@@ -76,7 +76,10 @@ class _VideoListState extends State<VideoList> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Image(image: AssetImage('assets/header.png'), height: 80),
+            Image(
+                image: AssetImage(
+                    lang == 'TR' ? 'assets/header.png' : 'assets/headeren.png'),
+                height: 80),
             betweenSpaceeee,
             betweenSpaceeee,
             betweenSpaceeee,
@@ -90,19 +93,19 @@ class _VideoListState extends State<VideoList> {
                   ),
                 );
               },
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Ana Sayfa',
-                    style: TextStyle(
+                    lang == 'TR' ? 'Ana Sayfa' : 'Home Page',
+                    style: const TextStyle(
                       fontFamily: 'VAGRoundedStd',
                       fontSize: 30,
                       color: Color.fromARGB(255, 218, 144, 47),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(Icons.chevron_right,
+                  const Icon(Icons.chevron_right,
                       size: 30, color: Color.fromARGB(255, 218, 144, 47)),
                 ],
               ),
