@@ -76,6 +76,11 @@ class _VideoItemsState extends State<VideoItems> {
             looping: false,
             allowedScreenSleep: false,
             zoomAndPan: true,
+            showOptions: false,
+            showControls: false,
+            allowPlaybackSpeedChanging: false,
+            allowMuting: false,
+            draggableProgressBar: false,
             useRootNavigator: true,
             errorBuilder: (context, errorMessage) {
               return Center(
@@ -308,7 +313,9 @@ class _VideoItemsState extends State<VideoItems> {
               child: SizedBox(
                 height: 550,
                 width: 800,
-                child: Chewie(controller: newChewieController[indexNumber]),
+                child: Chewie(
+                  controller: newChewieController[indexNumber],
+                ),
               ),
             ),
           ],
