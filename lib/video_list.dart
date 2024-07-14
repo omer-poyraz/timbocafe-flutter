@@ -28,9 +28,9 @@ class _VideoListState extends State<VideoList> {
     });
     final newList = [];
     var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[1].rootDir;
-    newPath = "$rootDir/Documents";
-    final File myFile = File('$rootDir/Documents/data.json');
+    var rootDir = storage[0].rootDir;
+    newPath = "$rootDir/teknobay";
+    final File myFile = File('$rootDir/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
     for (var i = 0; i < jsonData.length; i++) {

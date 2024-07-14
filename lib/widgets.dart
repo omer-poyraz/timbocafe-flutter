@@ -100,8 +100,8 @@ loginControl(BuildContext context, String userName, String password) async {
 
 Future createFolder() async {
   var storage = await PathProviderEx2.getStorageInfo();
-  var rootDir = storage[1].rootDir;
-  var drc = Directory("$rootDir/Documents");
+  var rootDir = storage[0].rootDir;
+  var drc = Directory("$rootDir/teknobay");
   if (!drc.existsSync()) {
     drc.createSync(recursive: true);
   }

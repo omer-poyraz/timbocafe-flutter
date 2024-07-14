@@ -41,8 +41,8 @@ class _VideoItemsState extends State<VideoItems> {
     });
     var newList = [];
     var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[1].rootDir;
-    final File myFile = File('$rootDir/Documents/data.json');
+    var rootDir = storage[0].rootDir;
+    final File myFile = File('$rootDir/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
     for (var j = 0; j < jsonData.length; j++) {
@@ -60,7 +60,7 @@ class _VideoItemsState extends State<VideoItems> {
 
         for (int i = 0; i < videoName.length; i++) {
           controller = VideoPlayerController.file(
-              File('$rootDir/Documents/${videoName[i]}'))
+              File('$rootDir/teknobay/${videoName[i]}'))
             // ..setLooping(true)
             ..initialize().then((_) {
               setState(() {});
@@ -125,8 +125,8 @@ class _VideoItemsState extends State<VideoItems> {
   Future<List<Widget>> getList() async {
     List<Widget> childs = [];
     var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[1].rootDir;
-    final File myFile = File('$rootDir/Documents/data.json');
+    var rootDir = storage[0].rootDir;
+    final File myFile = File('$rootDir/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
     // for (var i = 0; i < newChewieController.length; i++) {

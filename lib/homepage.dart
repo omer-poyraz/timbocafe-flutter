@@ -49,14 +49,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Dio dio = Dio();
     var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[1].rootDir;
-    var drc = Directory("$rootDir/Documents");
-    // /storage/5FDB-C5C1/Documents
+    var rootDir = storage[0].rootDir;
+    var drc = Directory("$rootDir/teknobay");
+    // /storage/5FDB-C5C1/teknobay
     files = io.Directory(drc.path).listSync();
 
     await dio.download('https://www.timboocafe.com/VideoGetir.aspx',
-        '$rootDir/Documents/data.json');
-    final File myFile = File('$rootDir/Documents/data.json');
+        '$rootDir/teknobay/data.json');
+    final File myFile = File('$rootDir/teknobay/data.json');
     jsonData = json.decode(myFile.readAsStringSync());
 
     if (jsonData.length != 0) {
@@ -103,9 +103,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           var videoValue = jsonData[i]['Dosya'].toString().split(',');
 
           // Dosya Resimleri İndirme
-          if (!File('$rootDir/Documents/$subValue').existsSync()) {
+          if (!File('$rootDir/teknobay/$subValue').existsSync()) {
             await dio.download('https://www.timboocafe.com/$value',
-                '$rootDir/Documents/$subValue',
+                '$rootDir/teknobay/$subValue',
                 onReceiveProgress: ((count, total) {
               setState(() {
                 percentage = ((count / total) * 100).floor();
@@ -125,9 +125,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             debugPrint("-------------------------------");
             debugPrint('Film adı: ${videoValue[j].substring(35)}');
             debugPrint(
-                'Film durumu: ${File('$rootDir/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
+                'Film durumu: ${File('$rootDir/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
 
-            if (!File('$rootDir/Documents/${videoValue[j].substring(35)}')
+            if (!File('$rootDir/teknobay/${videoValue[j].substring(35)}')
                 .existsSync()) {
               prefs.setBool(videoValue[j].split('/').last, false);
               setState(() {
@@ -135,7 +135,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
               await dio.download(
                 'https://www.timboocafe.com/${videoValue[j]}',
-                '$rootDir/Documents/${videoValue[j].substring(35)}',
+                '$rootDir/teknobay/${videoValue[j].substring(35)}',
                 onReceiveProgress: ((count, total) {
                   setState(() {
                     filesName = videoValue[j].substring(35);
@@ -166,9 +166,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           var videoValue = jsonData[i]['DosyaEn'].toString().split(',');
 
           // Dosya Resimleri İndirme
-          if (!File('$rootDir/Documents/$subValue').existsSync()) {
+          if (!File('$rootDir/teknobay/$subValue').existsSync()) {
             await dio.download('https://www.timboocafe.com/$value',
-                '$rootDir/Documents/$subValue',
+                '$rootDir/teknobay/$subValue',
                 onReceiveProgress: ((count, total) {
               setState(() {
                 percentage = ((count / total) * 100).floor();
@@ -188,9 +188,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             debugPrint("-------------------------------");
             debugPrint('Film adı: ${videoValue[j].substring(35)}');
             debugPrint(
-                'Film durumu: ${File('$rootDir/Documents/${videoValue[j].substring(35)}').existsSync().toString()}');
+                'Film durumu: ${File('$rootDir/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
 
-            if (!File('$rootDir/Documents/${videoValue[j].substring(35)}')
+            if (!File('$rootDir/teknobay/${videoValue[j].substring(35)}')
                 .existsSync()) {
               prefs.setBool(videoValue[j].split('/').last, false);
               setState(() {
@@ -198,7 +198,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
               await dio.download(
                 'https://www.timboocafe.com/${videoValue[j]}',
-                '$rootDir/Documents/${videoValue[j].substring(35)}',
+                '$rootDir/teknobay/${videoValue[j].substring(35)}',
                 onReceiveProgress: ((count, total) {
                   setState(() {
                     filesName = videoValue[j].substring(35);

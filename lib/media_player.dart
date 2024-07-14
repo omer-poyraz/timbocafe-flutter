@@ -32,11 +32,11 @@ class _MediaPlayerState extends State<MediaPlayer> {
 
   newmethod() async {
     var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[1].rootDir;
+    var rootDir = storage[0].rootDir;
 
     for (int i = 0; i < widget.videoName.length; i++) {
       changeVideo(
-          File('$rootDir/Documents/${widget.videoName[i].substring(35)}'));
+          File('$rootDir/teknobay/${widget.videoName[i].substring(35)}'));
     }
   }
 
