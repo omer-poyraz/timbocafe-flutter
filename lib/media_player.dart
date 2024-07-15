@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_items.dart';
 import 'package:video_player/video_player.dart';
@@ -7,48 +8,50 @@ import 'dart:io';
 class MediaPlayer extends StatefulWidget {
   final List<String> videoName;
   final String title;
+
   const MediaPlayer({super.key, required this.videoName, required this.title});
+
   @override
   State<MediaPlayer> createState() => _MediaPlayerState();
 }
 
 class _MediaPlayerState extends State<MediaPlayer> {
-  dynamic controller;
-  late List<VideoPlayerController> newList = [];
-
-  void changeVideo(File file) {
-    try {
-      controller = VideoPlayerController.file(file)
-        // ..setLooping(true)
-        ..initialize().then((_) {
-          setState(() {});
-          // controller.play();
-        });
-      newList.add(controller);
-    } catch (e) {
-      debugPrint('Change Video Catch: !!!!!!!! $e');
-    }
-  }
-
-  newmethod() async {
-    var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[0].rootDir;
-
-    for (int i = 0; i < widget.videoName.length; i++) {
-      changeVideo(
-          File('$rootDir/teknobay/${widget.videoName[i].substring(35)}'));
-    }
-  }
+  List<VideoPlayerController> _controllers = [];
 
   @override
   void initState() {
     super.initState();
-    newmethod();
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+
+    _initializeVideoControllers();
+  }
+
+  Future<void> _initializeVideoControllers() async {
+    try {
+      var storage = await PathProviderEx2.getStorageInfo();
+      var rootDir = storage[0].rootDir;
+
+      for (var video in widget.videoName) {
+        var file = File('$rootDir/teknobay/${video.substring(35)}');
+        var controller = VideoPlayerController.file(file);
+        await controller.initialize();
+        _controllers.add(controller);
+      }
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error initializing video controllers: $e');
+    }
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -58,7 +61,7 @@ class _MediaPlayerState extends State<MediaPlayer> {
       backgroundColor: Colors.amber[100],
       body: VideoItems(
         title: widget.title,
-        videoPlayerController: newList,
+        videoPlayerController: _controllers, // Corrected parameter name
         looping: false,
         autoplay: false,
       ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
@@ -15,8 +16,8 @@ class VideoItems extends StatefulWidget {
   final String title;
   const VideoItems({
     super.key,
-    required this.videoPlayerController,
     required this.looping,
+    required this.videoPlayerController,
     required this.autoplay,
     required this.title,
   });
@@ -26,61 +27,54 @@ class VideoItems extends StatefulWidget {
 }
 
 class _VideoItemsState extends State<VideoItems> {
-  late ChewieController _chewieController;
-  var newChewieController = [];
-  late List widgetList = [];
-  late List newList2 = [];
+  late List<ChewieController> _chewieControllers = [];
+  late List<VideoPlayerController> _videoControllers = [];
   var indexNumber = 0;
-  var lang = "TR";
-  dynamic controller;
+  String lang = "TR";
 
   void newmethod() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      lang = prefs.getString("lang")!;
+      lang = prefs.getString("lang") ?? "TR";
     });
-    var newList = [];
+
     var storage = await PathProviderEx2.getStorageInfo();
     var rootDir = storage[0].rootDir;
     final File myFile = File('$rootDir/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
+    List<ChewieController> newChewieControllers = [];
+    List<VideoPlayerController> newVideoControllers = [];
+
     for (var j = 0; j < jsonData.length; j++) {
       if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
           widget.title) {
-        var videoList = [];
         var videos = jsonData[j][lang == 'TR' ? 'Dosya' : 'DosyaEn']
             .toString()
             .split(",");
-        for (var k = 0; k < videos.length; k++) {
-          videoList.add(
-              videos[k].replaceAll("Webkontrol/IcerikYonetimi/Dosyalar/", ""));
-        }
-        var videoName = videoList;
 
-        for (int i = 0; i < videoName.length; i++) {
-          controller = VideoPlayerController.file(
-              File('$rootDir/teknobay/${videoName[i]}'))
-            // ..setLooping(true)
-            ..initialize().then((_) {
-              setState(() {});
-              // controller.play();
-            });
-          newList2.add(controller);
+        for (var video in videos) {
+          String videoPath =
+              '$rootDir/teknobay/${video.replaceAll("Webkontrol/IcerikYonetimi/Dosyalar/", "")}';
+          VideoPlayerController videoController =
+              VideoPlayerController.file(File(videoPath));
+          await videoController.initialize();
+          newVideoControllers.add(videoController);
 
-          _chewieController = ChewieController(
-            videoPlayerController: controller,
+          ChewieController chewieController = ChewieController(
+            videoPlayerController: videoController,
             aspectRatio: 3 / 2,
-            autoInitialize: false,
-            autoPlay: false,
+            autoInitialize: true, // Video otomatik olarak başlatılsın
+            autoPlay: false, // Otomatik oynatma devre dışı bırakılsın
             looping: false,
             allowedScreenSleep: false,
             zoomAndPan: true,
-            showOptions: false,
-            showControls: false,
+            showOptions: true, // Video oynatma seçeneklerini göster
+            showControls: true, // Video kontrollerini göster
             allowPlaybackSpeedChanging: false,
             allowMuting: false,
-            draggableProgressBar: false,
+            draggableProgressBar:
+                true, // İlerleme çubuğunu sürükleyerek ileri geri sar
             useRootNavigator: true,
             errorBuilder: (context, errorMessage) {
               return Center(
@@ -96,30 +90,40 @@ class _VideoItemsState extends State<VideoItems> {
               );
             },
           );
-          newList.add(_chewieController);
+          newChewieControllers.add(chewieController);
         }
       }
     }
 
     setState(() {
-      newChewieController = newList;
+      _chewieControllers = newChewieControllers;
+      _videoControllers = newVideoControllers;
     });
   }
 
   @override
   void initState() {
     super.initState();
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+
     newmethod();
   }
 
   @override
   void dispose() {
-    super.dispose();
-    for (var i = 0; i < newList2.length; i++) {
-      newList2[i].dispose();
+    for (var controller in _videoControllers) {
+      controller.pause();
+      controller.dispose();
     }
-    newChewieController[indexNumber].dispose();
-    newChewieController[indexNumber].pause();
+    for (var controller in _chewieControllers) {
+      controller.pause();
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<List<Widget>> getList() async {
@@ -129,7 +133,6 @@ class _VideoItemsState extends State<VideoItems> {
     final File myFile = File('$rootDir/teknobay/data.json');
     var jsonData = json.decode(myFile.readAsStringSync());
 
-    // for (var i = 0; i < newChewieController.length; i++) {
     for (var j = 0; j < jsonData.length; j++) {
       if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
           widget.title) {
@@ -137,31 +140,32 @@ class _VideoItemsState extends State<VideoItems> {
             .toString()
             .split(',');
         for (var z = 0; z < newList.length; z++) {
-          childs.add(InkWell(
-            onTap: () {
-              setState(() {
-                for (var y = 0; y < newList.length; y++) {
-                  if (newList[y] != newList[z]) {
-                    newChewieController[z].pause();
+          childs.add(
+            InkWell(
+              onTap: () {
+                setState(() {
+                  indexNumber = z;
+                  for (var i = 0; i < _chewieControllers.length; i++) {
+                    if (i != indexNumber) {
+                      _chewieControllers[i].pause();
+                    }
                   }
-                }
-                debugPrint("zzzzzz: $z");
-                indexNumber = z;
-              });
-            },
-            child: Card(
-              color: Colors.orange,
-              child: ListTile(
-                leading: const Icon(Icons.video_label_rounded),
-                title: Text(newList[z].toString().split('/').last),
-                trailing: const Icon(Icons.chevron_right),
+                  _chewieControllers[indexNumber].play();
+                });
+              },
+              child: Card(
+                color: Colors.orange,
+                child: ListTile(
+                  leading: const Icon(Icons.video_label_rounded),
+                  title: Text(newList[z].toString().split('/').last),
+                  trailing: const Icon(Icons.chevron_right),
+                ),
               ),
             ),
-          ));
+          );
         }
       }
     }
-    // }
     return childs;
   }
 
@@ -181,10 +185,9 @@ class _VideoItemsState extends State<VideoItems> {
                     ? InkWell(
                         onTap: () {
                           setState(() {
+                            _chewieControllers[indexNumber].pause();
                             indexNumber = indexNumber - 1;
-                            debugPrint(indexNumber.toString());
-                            newChewieController[indexNumber + 1].pause();
-                            newChewieController[indexNumber].play();
+                            _chewieControllers[indexNumber].play();
                           });
                         },
                         child: Row(
@@ -213,19 +216,14 @@ class _VideoItemsState extends State<VideoItems> {
                       )
                     : const Text(""),
                 betweenSpaceee,
-                indexNumber < newList2.length - 1
+                indexNumber < _chewieControllers.length - 1
                     ? InkWell(
                         onTap: () {
-                          try {
-                            setState(() {
-                              indexNumber = indexNumber + 1;
-                              debugPrint(indexNumber.toString());
-                              newChewieController[indexNumber - 1].pause();
-                            });
-                          } catch (e) {
-                            debugPrint(
-                                "Birrrrrrrr hataaaaa varrrrrrrr : ${e.toString()}");
-                          }
+                          setState(() {
+                            _chewieControllers[indexNumber].pause();
+                            indexNumber = indexNumber + 1;
+                            _chewieControllers[indexNumber].play();
+                          });
                         },
                         child: Row(
                           children: [
@@ -259,10 +257,12 @@ class _VideoItemsState extends State<VideoItems> {
             ),
             InkWell(
               onTap: () {
-                for (var i = 0; i < newList2.length; i++) {
-                  newList2[i].dispose();
+                for (var controller in _videoControllers) {
+                  controller.dispose();
                 }
-                newChewieController[indexNumber].dispose();
+                for (var controller in _chewieControllers) {
+                  controller.dispose();
+                }
 
                 Navigator.push(
                   context,
@@ -296,10 +296,11 @@ class _VideoItemsState extends State<VideoItems> {
                   if (snapshot.hasError) {
                     return Center(child: Text(snapshot.error.toString()));
                   } else if (snapshot.hasData) {
-                    return ListView(
-                      padding:
-                          const EdgeInsets.only(top: 10, bottom: 10, left: 10),
-                      children: snapshot.data!,
+                    return ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        return snapshot.data![index];
+                      },
                     );
                   } else {
                     return const Center(child: CircularProgressIndicator());
@@ -313,9 +314,9 @@ class _VideoItemsState extends State<VideoItems> {
               child: SizedBox(
                 height: 550,
                 width: 800,
-                child: Chewie(
-                  controller: newChewieController[indexNumber],
-                ),
+                child: _chewieControllers.isNotEmpty
+                    ? Chewie(controller: _chewieControllers[indexNumber])
+                    : const Center(child: CircularProgressIndicator()),
               ),
             ),
           ],

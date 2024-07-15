@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' as io;
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +24,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     parent: _controller,
     curve: Curves.elasticOut,
   );
+
   var isLoading = true;
   var isLoading2 = false;
   var isDeleting = false;
@@ -39,195 +39,121 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool didDownloadPDF = false;
   double progress = 0;
 
-  Directory findRoot(FileSystemEntity entity) {
-    final Directory parent = entity.parent;
-    if (parent.path == entity.path) return parent;
-    return findRoot(parent);
-  }
-
-  Future downloadFile() async {
+  Future<void> downloadFile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     Dio dio = Dio();
     var storage = await PathProviderEx2.getStorageInfo();
     var rootDir = storage[0].rootDir;
     var drc = Directory("$rootDir/teknobay");
-    // /storage/5FDB-C5C1/teknobay
-    files = io.Directory(drc.path).listSync();
+    files = Directory(drc.path).listSync();
 
-    await dio.download('https://www.timboocafe.com/VideoGetir.aspx',
-        '$rootDir/teknobay/data.json');
+    await dio.download(
+      'https://www.timboocafe.com/VideoGetir.aspx',
+      '$rootDir/teknobay/data.json',
+    );
     final File myFile = File('$rootDir/teknobay/data.json');
     jsonData = json.decode(myFile.readAsStringSync());
 
-    if (jsonData.length != 0) {
-      for (var i = 0; i < jsonData.length; i++) {
-        var videoValues = jsonData[i]['Dosya'].toString().split(',');
-        var videoValuesEn = jsonData[i]['DosyaEn'].toString().split(',');
-        for (var j = 0; j < videoValues.length; j++) {
-          if (videoValues[j].isNotEmpty) {
-            jsonDataList.add(videoValues[j].split('/').last);
-          }
-        }
-        for (var j = 0; j < videoValuesEn.length; j++) {
-          if (videoValuesEn[j].isNotEmpty) {
-            jsonDataListEn.add(videoValuesEn[j].split('/').last);
-          }
-        }
-      }
-      for (var j = 0; j < files.length; j++) {
-        fileList.add(files[j].path.split('/').last);
-      }
-
-      // fazla olan dosyaları silme
-      for (var j = 0; j < fileList.length; j++) {
-        var isFile = jsonDataList.indexOf(fileList[j]);
-        var isFileEn = jsonDataListEn.indexOf(fileList[j]);
-        if (isFile < 0 && isFileEn < 0) {
-          if (files[j].path.toString().split(".").last != "json" &&
-              files[j].path.toString().split(".").last != "png" &&
-              files[j].path.toString().split(".").last != "jpg" &&
-              files[j].path.toString().split(".").last != "jpeg") {
-            debugPrint("Dosya silindi!  (${fileList[j]})");
-            files[j].delete();
-            prefs.setBool(fileList[j], false);
-          }
-        }
-      }
-
-      // olmayan dosyaları indirme
-      for (var i = 0; i < jsonData.length; i++) {
-        // Türkçe Videoları İndirme
-        if (jsonData[i]['Dosya'] != null && jsonData[i]['DosyaResim'] != null) {
-          var value = jsonData[i]['DosyaResim'].toString();
-          var subValue = value.substring(54);
-          var videoValue = jsonData[i]['Dosya'].toString().split(',');
-
-          // Dosya Resimleri İndirme
-          if (!File('$rootDir/teknobay/$subValue').existsSync()) {
-            await dio.download('https://www.timboocafe.com/$value',
-                '$rootDir/teknobay/$subValue',
-                onReceiveProgress: ((count, total) {
-              setState(() {
-                percentage = ((count / total) * 100).floor();
-              });
-            }));
-            setState(() {
-              isLoading = false;
-            });
-          } else {
-            setState(() {
-              isLoading = true;
-            });
-          }
-          // Dosya Resimleri İndirme Bitiş
-
-          for (int j = 0; j < videoValue.length; j++) {
-            debugPrint("-------------------------------");
-            debugPrint('Film adı: ${videoValue[j].substring(35)}');
-            debugPrint(
-                'Film durumu: ${File('$rootDir/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
-
-            if (!File('$rootDir/teknobay/${videoValue[j].substring(35)}')
-                .existsSync()) {
-              prefs.setBool(videoValue[j].split('/').last, false);
-              setState(() {
-                isLoading = false;
-              });
-              await dio.download(
-                'https://www.timboocafe.com/${videoValue[j]}',
-                '$rootDir/teknobay/${videoValue[j].substring(35)}',
-                onReceiveProgress: ((count, total) {
-                  setState(() {
-                    filesName = videoValue[j].substring(35);
-                    percentage = ((count / total) * 100).floor();
-                    if (percentage == 100) {
-                      prefs.setBool(videoValue[j].split('/').last, true);
-                      setState(() {
-                        isLoading = true;
-                      });
-                    }
-                  });
-                }),
-              );
-            } else {
-              setState(() {
-                isLoading = true;
-              });
-            }
-          }
-        }
-        // Türkçe Videoları İndirme Bitiş
-
-        // İngilizce Videoları İndirme
-        if (jsonData[i]['DosyaEn'] != null &&
-            jsonData[i]['DosyaResim'] != null) {
-          var value = jsonData[i]['DosyaResim'].toString();
-          var subValue = value.substring(54);
-          var videoValue = jsonData[i]['DosyaEn'].toString().split(',');
-
-          // Dosya Resimleri İndirme
-          if (!File('$rootDir/teknobay/$subValue').existsSync()) {
-            await dio.download('https://www.timboocafe.com/$value',
-                '$rootDir/teknobay/$subValue',
-                onReceiveProgress: ((count, total) {
-              setState(() {
-                percentage = ((count / total) * 100).floor();
-              });
-            }));
-            setState(() {
-              isLoading = false;
-            });
-          } else {
-            setState(() {
-              isLoading = true;
-            });
-          }
-          // Dosya Resimleri İndirme Bitiş
-
-          for (int j = 0; j < videoValue.length; j++) {
-            debugPrint("-------------------------------");
-            debugPrint('Film adı: ${videoValue[j].substring(35)}');
-            debugPrint(
-                'Film durumu: ${File('$rootDir/teknobay/${videoValue[j].substring(35)}').existsSync().toString()}');
-
-            if (!File('$rootDir/teknobay/${videoValue[j].substring(35)}')
-                .existsSync()) {
-              prefs.setBool(videoValue[j].split('/').last, false);
-              setState(() {
-                isLoading = false;
-              });
-              await dio.download(
-                'https://www.timboocafe.com/${videoValue[j]}',
-                '$rootDir/teknobay/${videoValue[j].substring(35)}',
-                onReceiveProgress: ((count, total) {
-                  setState(() {
-                    filesName = videoValue[j].substring(35);
-                    percentage = ((count / total) * 100).floor();
-                    if (percentage == 100) {
-                      prefs.setBool(videoValue[j].split('/').last, true);
-                      setState(() {
-                        isLoading = true;
-                      });
-                    }
-                  });
-                }),
-              );
-            } else {
-              setState(() {
-                isLoading = true;
-              });
-            }
-          }
-        }
-        // İngilizce Videoları İndirme Bitiş
-      }
-      setState(() {
-        isLoading = true;
-      });
+    if (jsonData.isNotEmpty) {
+      await _processJsonData(prefs, dio, rootDir);
     }
+
     setState(() {
       isLoading2 = true;
     });
+  }
+
+  Future<void> _processJsonData(
+      SharedPreferences prefs, Dio dio, String rootDir) async {
+    for (var item in jsonData) {
+      _processVideoFiles(item, 'Dosya', jsonDataList);
+      _processVideoFiles(item, 'DosyaEn', jsonDataListEn);
+    }
+
+    for (var file in files) {
+      fileList.add(file.path.split('/').last);
+    }
+
+    await _deleteUnnecessaryFiles(prefs, rootDir);
+    await _downloadMissingFiles(prefs, dio, rootDir);
+  }
+
+  void _processVideoFiles(dynamic item, String key, List<dynamic> list) {
+    var videoValues = item[key]?.toString().split(',') ?? [];
+    for (var value in videoValues) {
+      if (value.isNotEmpty) {
+        list.add(value.split('/').last);
+      }
+    }
+  }
+
+  Future<void> _deleteUnnecessaryFiles(
+      SharedPreferences prefs, String rootDir) async {
+    for (var file in fileList) {
+      var isFile = jsonDataList.contains(file);
+      var isFileEn = jsonDataListEn.contains(file);
+      if (!isFile && !isFileEn) {
+        var fileExtension = file.split(".").last;
+        if (!['json', 'png', 'jpg', 'jpeg'].contains(fileExtension)) {
+          debugPrint("Dosya silindi!  ($file)");
+          File('$rootDir/teknobay/$file').deleteSync();
+          prefs.setBool(file, false);
+        }
+      }
+    }
+  }
+
+  Future<void> _downloadMissingFiles(
+      SharedPreferences prefs, Dio dio, String rootDir) async {
+    for (var item in jsonData) {
+      await _downloadFiles(item, 'Dosya', 'DosyaResim', prefs, dio, rootDir);
+      await _downloadFiles(item, 'DosyaEn', 'DosyaResim', prefs, dio, rootDir);
+    }
+  }
+
+  Future<void> _downloadFiles(dynamic item, String videoKey, String imageKey,
+      SharedPreferences prefs, Dio dio, String rootDir) async {
+    var value = item[imageKey]?.toString() ?? '';
+    var subValue = value.substring(54);
+    var videoValues = item[videoKey]?.toString().split(',') ?? [];
+
+    if (value.isNotEmpty && !File('$rootDir/teknobay/$subValue').existsSync()) {
+      await dio.download(
+        'https://www.timboocafe.com/$value',
+        '$rootDir/teknobay/$subValue',
+        onReceiveProgress: (count, total) {
+          setState(() {
+            percentage = ((count / total) * 100).floor();
+          });
+        },
+      );
+    }
+
+    for (var video in videoValues) {
+      var videoPath = '$rootDir/teknobay/${video.substring(35)}';
+      if (!File(videoPath).existsSync()) {
+        prefs.setBool(video.split('/').last, false);
+        setState(() {
+          isLoading = false;
+        });
+        await dio.download(
+          'https://www.timboocafe.com/$video',
+          videoPath,
+          onReceiveProgress: (count, total) {
+            setState(() {
+              filesName = video.substring(35);
+              percentage = ((count / total) * 100).floor();
+              if (percentage == 100) {
+                prefs.setBool(video.split('/').last, true);
+                setState(() {
+                  isLoading = true;
+                });
+              }
+            });
+          },
+        );
+      }
+    }
   }
 
   @override
@@ -265,57 +191,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ),
           ),
-          !isLoading
-              ? Positioned(
-                  bottom: MediaQuery.of(context).size.height / 1.35,
-                  right: MediaQuery.of(context).size.width / 4,
-                  child: Column(
+          if (!isLoading)
+            Positioned(
+              bottom: MediaQuery.of(context).size.height / 1.35,
+              right: MediaQuery.of(context).size.width / 4,
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          const CircularProgressIndicator(
-                            color: Colors.orange,
-                          ),
-                          betweenSpacee,
-                          const Text(
-                            "Yükleniyor... Lütfen videolarınızın yüklenmesini bekleyiniz!",
-                            style: TextStyle(
-                              fontFamily: 'VAGRoundedStd',
-                              fontSize: 22,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
+                      const CircularProgressIndicator(
+                        color: Colors.orange,
                       ),
-                      Text(
-                        filesName,
-                        style: const TextStyle(
-                          color: Colors.purple,
+                      betweenSpacee,
+                      const Text(
+                        "Yükleniyor... Lütfen videolarınızın yüklenmesini bekleyiniz!",
+                        style: TextStyle(
                           fontFamily: 'VAGRoundedStd',
                           fontSize: 22,
-                        ),
-                      ),
-                      bottomSpace,
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 20),
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 2, color: Colors.purple),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          "% ${percentage.toString()} Yüklendi.",
-                          style: const TextStyle(
-                            fontFamily: 'VAGRoundedStd',
-                            fontSize: 22,
-                            color: Colors.orange,
-                          ),
+                          color: Colors.orange,
                         ),
                       ),
                     ],
                   ),
-                )
-              : const Text(""),
+                  Text(
+                    filesName,
+                    style: const TextStyle(
+                      color: Colors.purple,
+                      fontFamily: 'VAGRoundedStd',
+                      fontSize: 22,
+                    ),
+                  ),
+                  bottomSpace,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 20),
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 2, color: Colors.purple),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "% ${percentage.toString()} Yüklendi.",
+                      style: const TextStyle(
+                        fontFamily: 'VAGRoundedStd',
+                        fontSize: 22,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Positioned(
             bottom: MediaQuery.of(context).size.height / 9.5,
             right: MediaQuery.of(context).size.width / 2.2,
