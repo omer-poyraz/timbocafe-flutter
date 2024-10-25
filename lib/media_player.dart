@@ -1,22 +1,25 @@
 import 'package:flutter/services.dart';
-import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:timboo/video_items.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 class MediaPlayer extends StatefulWidget {
   final List<String> videoName;
+  final String basePath;
   final String title;
 
-  const MediaPlayer({super.key, required this.videoName, required this.title});
+  const MediaPlayer(
+      {super.key,
+      required this.videoName,
+      required this.title,
+      required this.basePath});
 
   @override
   State<MediaPlayer> createState() => _MediaPlayerState();
 }
 
 class _MediaPlayerState extends State<MediaPlayer> {
-  List<VideoPlayerController> _controllers = [];
+  final List<VideoPlayerController> _controllers = [];
 
   @override
   void initState() {
@@ -32,12 +35,9 @@ class _MediaPlayerState extends State<MediaPlayer> {
 
   Future<void> _initializeVideoControllers() async {
     try {
-      var storage = await PathProviderEx2.getStorageInfo();
-      var rootDir = storage[0].rootDir;
-
       for (var video in widget.videoName) {
-        var file = File('$rootDir/teknobay/${video.substring(35)}');
-        var controller = VideoPlayerController.file(file);
+        var controller =
+            VideoPlayerController.networkUrl(Uri.parse("${widget.basePath}$video"));
         await controller.initialize();
         _controllers.add(controller);
       }
@@ -60,10 +60,9 @@ class _MediaPlayerState extends State<MediaPlayer> {
     return Scaffold(
       backgroundColor: Colors.amber[100],
       body: VideoItems(
+        videos: widget.videoName,
+        basePath: widget.basePath,
         title: widget.title,
-        videoPlayerController: _controllers, // Corrected parameter name
-        looping: false,
-        autoplay: false,
       ),
     );
   }

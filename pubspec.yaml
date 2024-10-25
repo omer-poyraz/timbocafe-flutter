@@ -18,6 +18,8 @@ dependencies:
   path_provider_ex2:
   video_player:
   chewie:
+  ftpconnect:
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +32,7 @@ flutter:
    - assets/headeren.png
    - assets/home.jpg
    - assets/initial.jpg
+   - assets/bg.png
 
   fonts:
     - family: VAGRoundedStd

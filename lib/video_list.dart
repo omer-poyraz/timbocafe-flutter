@@ -1,75 +1,117 @@
-import 'package:flutter/services.dart';
+// ignore_for_file: library_private_types_in_public_api
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:path_provider_ex2/path_provider_ex2.dart';
+import 'package:ftpconnect/ftpconnect.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/homepage.dart';
+import 'package:timboo/media_player.dart';
 import 'package:timboo/widgets.dart';
-import 'media_player.dart';
-import 'dart:convert';
-import 'dart:io';
 
 class VideoList extends StatefulWidget {
   const VideoList({super.key});
+
   @override
-  State<VideoList> createState() => _VideoListState();
+  _VideoListState createState() => _VideoListState();
 }
 
 class _VideoListState extends State<VideoList> {
-  List<dynamic> listData = [];
-  var videoLength = 0;
-  var newPath = "";
+  final String jsonUrl = "https://timboocafe.com/VideoGetir.aspx";
+  final String nasBaseUrl =
+      "http://192.168.1.4:8080/cgi-bin/Timboo Cafe/Videolar/";
+  var basePath = "";
   var lang = "TR";
-  dynamic controller;
 
-  fileRead() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      lang = prefs.getString("lang")!;
-    });
-    final newList = [];
-    var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[0].rootDir;
-    newPath = "$rootDir/teknobay";
-    final File myFile = File('$rootDir/teknobay/data.json');
-    var jsonData = json.decode(myFile.readAsStringSync());
-
-    for (var i = 0; i < jsonData.length; i++) {
-      if (lang == "TR") {
-        if (jsonData[i]["Dosya"] != null) {
-          newList.add(jsonData[i]);
-        }
-      } else {
-        if (jsonData[i]["DosyaEn"] != null) {
-          newList.add(jsonData[i]);
-        }
-      }
-    }
-
-    listData = newList;
-  }
+  List<dynamic> imageList = [];
+  List<dynamic> jsonData = [];
 
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
-    createFolder();
-    fileRead();
+    _fetchVideoData();
+    _fetchFilesFromFtp();
   }
 
-  @override
-  void dispose() {
-    fileRead();
-    controller.dispose();
-    super.dispose();
+  Future<void> _fetchVideoData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? ip = prefs.getString("IP");
+      setState(() {
+        basePath =
+            "http://$ip:8080/cgi-bin/filemanager/utilRequest.cgi/timbo-heidi_film_g260_k_aPlknEQI.png?sid=qm4l9b2e&func=get_viewer&source_path=%2FTimboo%20Cafe%2FVideolar&source_file=";
+        lang = prefs.getString("lang")!;
+        imageList.clear();
+      });
+
+      final response = await http.get(Uri.parse(jsonUrl));
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        if (jsonResponse is List) {
+          jsonData = jsonResponse;
+          await _fetchFilesFromFtp();
+        } else {
+          debugPrint('Hatalı JSON formatı');
+        }
+      } else {
+        debugPrint('Veri getirilemedi: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Hata: $e");
+    }
+  }
+
+  Future<void> _fetchFilesFromFtp() async {
+    final FTPConnect ftpConnect =
+        FTPConnect("192.168.1.4", user: "admin", pass: "admin");
+
+    try {
+      await ftpConnect.connect();
+      bool changedDirCafe = await ftpConnect.changeDirectory('Timboo Cafe');
+      if (changedDirCafe) {
+        bool changedDirVideos = await ftpConnect.changeDirectory('Videolar');
+        if (changedDirVideos) {
+          List<FTPEntry> entries = await ftpConnect.listDirectoryContent();
+
+          for (var jsonItem in jsonData) {
+            String imageName = jsonItem["DosyaResim"].split('/').last;
+            bool imageExists = entries.any((entry) => entry.name == imageName);
+
+            String imagePath;
+            if (imageExists) {
+              imagePath = "$basePath$imageName";
+            } else {
+              imagePath =
+                  'https://www.timboocafe.com/Site/Library/images/logo-b.png';
+            }
+
+            setState(() {
+              imageList.add({
+                "img": imagePath,
+                "name": jsonItem["Icerik_Baslik"],
+                "nameEn": jsonItem["Icerik_KisaAciklama"],
+                "color": jsonItem["DosyaRenk"],
+                "videos": jsonItem["Dosya"],
+                "videosEn": jsonItem["DosyaEn"]
+              });
+            });
+          }
+        } else {
+          debugPrint('Videolar klasörüne geçilemedi.');
+        }
+      } else {
+        debugPrint('Timboo Cafe klasörüne geçilemedi.');
+      }
+
+      await ftpConnect.disconnect();
+    } catch (e) {
+      debugPrint('FTP Bağlantı Hatası: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.amber[100],
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.amber[100],
@@ -117,118 +159,79 @@ class _VideoListState extends State<VideoList> {
         elevation: 20,
         shadowColor: const Color.fromARGB(255, 246, 241, 226),
       ),
-      body: Container(
-        color: Colors.amber[100],
-        child: FutureBuilder(
-          future: fileRead(),
-          builder: (context, snapshot) {
-            debugPrint(snapshot.data.toString());
-            return GridView.builder(
-              // physics: const NeverScrollableScrollPhysics(),
+      backgroundColor: Colors.amber[100],
+      body: imageList.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : GridView.builder(
               shrinkWrap: true,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 mainAxisSpacing: 8.0,
                 crossAxisSpacing: 8.0,
               ),
-              itemCount: listData.length,
+              itemCount: jsonData.length,
               itemBuilder: (context, index) {
-                var dosyaRenk = listData[index]['DosyaRenk'].toString();
-                dynamic dosyaRenk2;
-                dynamic dosyaRenk3;
-                dynamic dosyaRenkLength;
+                final video = imageList[index];
+                final videoTitle = video['name'] ?? '';
+                final videoTitleEn = video['nameEn'] ?? '';
+                final videoImagePath = video["img"];
+                final videos = video["videos"].toString().split(",");
+                final videosEn = video["videosEn"].toString().split(",");
 
-                if (listData[index]['DosyaRenk'] != null) {
-                  dosyaRenkLength = dosyaRenk.length;
-                  dosyaRenk2 = dosyaRenk.substring(5, dosyaRenkLength - 1);
-                  dosyaRenk3 = dosyaRenk2.split(',');
-                }
-
-                return listData[index]['DosyaResim'] != null
-                    ? videoCard(
-                        context,
-                        listData[index]['DosyaResim'],
-                        listData[index]['Dosya'].toString().split(','),
-                        listData[index][lang == "TR"
-                            ? 'Icerik_Baslik'
-                            : 'Icerik_KisaAciklama'],
-                        listData[index]['DosyaRenk'] == null
-                            ? const Color.fromARGB(255, 44, 93, 53)
-                            : Color.fromARGB(
-                                int.parse(dosyaRenk3[0]),
-                                int.parse(dosyaRenk3[1]),
-                                int.parse(dosyaRenk3[2]),
-                                int.parse(dosyaRenk3[3]),
-                              ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Image(
-                            image: AssetImage('assets/initial.jpg'),
-                            width: 150,
+                return GestureDetector(
+                  onTap: () async {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MediaPlayer(
+                          basePath: basePath,
+                          title: lang == "TR" ? videoTitle : videoTitleEn,
+                          videoName: lang == "TR" ? videos : videosEn,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 200,
+                        width: double.infinity,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15),
                           ),
-                          bottomSpaceeee,
-                          bottomSpaceeee,
-                          Text(
-                            listData[index][lang == "TR"
-                                ? 'Icerik_Baslik'
-                                : 'Icerik_KisaAciklama'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'VAGRoundedStd',
-                              fontSize: 23,
-                              color: Colors.red,
-                            ),
+                          child: Image.network(
+                            videoImagePath,
+                            errorBuilder: (BuildContext context, Object error,
+                                StackTrace? stackTrace) {
+                              return Image.asset(
+                                'assets/bg.png',
+                              );
+                            },
                           ),
-                        ],
-                      );
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          lang == "TR" ? videoTitle : videoTitleEn,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  InkWell videoCard(BuildContext context, String path, List<String> videoName,
-      String title, Color color) {
-    return InkWell(
-      onTap: () async {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MediaPlayer(
-              title: title,
-              videoName: videoName,
             ),
-          ),
-        );
-      },
-      child: SizedBox(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Column(
-            children: [
-              Image(
-                image: FileImage(File('$newPath/${path.substring(54)}')),
-                width: MediaQuery.of(context).size.width / 6,
-                height: MediaQuery.of(context).size.height / 3.2,
-              ),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'VAGRoundedStd',
-                  fontSize: 23,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

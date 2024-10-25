@@ -10,6 +10,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  late TextEditingController nasIpController = TextEditingController();
   late TextEditingController userNameController = TextEditingController();
   late TextEditingController passwordController = TextEditingController();
 
@@ -44,6 +45,23 @@ class _LoginPageState extends State<LoginPage> {
                         image: AssetImage('assets/initial.jpg'),
                       ),
                       bottomSpaceeee,
+                      TextField(
+                        controller: nasIpController,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.security),
+                          labelText: 'NAS IP',
+                          hintText: "192.168.1.4",
+                          floatingLabelBehavior: FloatingLabelBehavior.auto,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: const BorderSide(
+                              color: Colors.amber,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      bottomSpace,
                       TextField(
                         controller: userNameController,
                         decoration: InputDecoration(
@@ -88,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                           // downloadFile();
                           loginControl(
                             context,
+                            nasIpController.text,
                             userNameController.text,
                             passwordController.text,
                           );

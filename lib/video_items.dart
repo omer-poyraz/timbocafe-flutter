@@ -1,24 +1,21 @@
-import 'dart:convert';
-import 'dart:io';
+// ignore_for_file: must_be_immutable
+
 import 'package:flutter/services.dart';
-import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timboo/video_list.dart';
-import 'package:timboo/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoItems extends StatefulWidget {
-  final List videoPlayerController;
-  final bool looping;
-  final bool autoplay;
+  List<String> videos;
+  String basePath;
   final String title;
-  const VideoItems({
+
+  VideoItems({
     super.key,
-    required this.looping,
-    required this.videoPlayerController,
-    required this.autoplay,
+    required this.videos,
+    required this.basePath,
     required this.title,
   });
 
@@ -32,85 +29,80 @@ class _VideoItemsState extends State<VideoItems> {
   var indexNumber = 0;
   String lang = "TR";
 
-  void newmethod() async {
+  void newMethod() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       lang = prefs.getString("lang") ?? "TR";
     });
 
-    var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[0].rootDir;
-    final File myFile = File('$rootDir/teknobay/data.json');
-    var jsonData = json.decode(myFile.readAsStringSync());
-
     List<ChewieController> newChewieControllers = [];
     List<VideoPlayerController> newVideoControllers = [];
+    List<String> availableVideos = [];
 
-    for (var j = 0; j < jsonData.length; j++) {
-      if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
-          widget.title) {
-        var videos = jsonData[j][lang == 'TR' ? 'Dosya' : 'DosyaEn']
-            .toString()
-            .split(",");
-
-        for (var video in videos) {
-          String videoPath =
-              '$rootDir/teknobay/${video.replaceAll("Webkontrol/IcerikYonetimi/Dosyalar/", "")}';
-          VideoPlayerController videoController =
-              VideoPlayerController.file(File(videoPath));
-          await videoController.initialize();
-          newVideoControllers.add(videoController);
-
-          ChewieController chewieController = ChewieController(
-            videoPlayerController: videoController,
-            aspectRatio: 3 / 2,
-            autoInitialize: true, // Video otomatik olarak başlatılsın
-            autoPlay: false, // Otomatik oynatma devre dışı bırakılsın
-            looping: false,
-            allowedScreenSleep: false,
-            zoomAndPan: true,
-            showOptions: true, // Video oynatma seçeneklerini göster
-            showControls: true, // Video kontrollerini göster
-            allowPlaybackSpeedChanging: false,
-            allowMuting: false,
-            draggableProgressBar:
-                true, // İlerleme çubuğunu sürükleyerek ileri geri sar
-            useRootNavigator: true,
-            errorBuilder: (context, errorMessage) {
-              return Center(
-                child: Text(
-                  lang == 'TR'
-                      ? "Hatalı bir video! Lütfen yeniden yükleyiniz!"
-                      : "Faulty video! Please re-upload!",
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontFamily: 'VAGRoundedStd',
-                  ),
+    for (var video in widget.videos) {
+      VideoPlayerController videoController = VideoPlayerController.networkUrl(
+          Uri.parse("${widget.basePath}$video"));
+      try {
+        await videoController.initialize();
+        availableVideos.add(video);
+        newVideoControllers.add(videoController);
+        ChewieController chewieController = ChewieController(
+          videoPlayerController: videoController,
+          aspectRatio: 3 / 2,
+          autoInitialize: false,
+          autoPlay: false,
+          looping: false,
+          allowedScreenSleep: false,
+          zoomAndPan: true,
+          showOptions: true,
+          showControls: true,
+          allowPlaybackSpeedChanging: false,
+          allowMuting: false,
+          draggableProgressBar: true,
+          useRootNavigator: true,
+          errorBuilder: (context, errorMessage) {
+            debugPrint(errorMessage.toString());
+            return Center(
+              child: Text(
+                lang == 'TR'
+                    ? "Hatalı bir video! Lütfen yeniden yükleyiniz!"
+                    : "Faulty video! Please re-upload!",
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontFamily: 'VAGRoundedStd',
                 ),
-              );
-            },
-          );
-          newChewieControllers.add(chewieController);
-        }
+              ),
+            );
+          },
+        );
+        newChewieControllers.add(chewieController);
+      } catch (e) {
+        debugPrint("VideoInit:${e.toString()}");
       }
     }
 
-    setState(() {
-      _chewieControllers = newChewieControllers;
-      _videoControllers = newVideoControllers;
-    });
+    if (availableVideos.isNotEmpty) {
+      setState(() {
+        _chewieControllers = newChewieControllers;
+        _videoControllers = newVideoControllers;
+        widget.videos = availableVideos;
+      });
+    } else {
+      setState(() {
+        widget.videos = []; 
+      });
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    newMethod();
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
     ]);
-
-    newmethod();
   }
 
   @override
@@ -127,46 +119,34 @@ class _VideoItemsState extends State<VideoItems> {
   }
 
   Future<List<Widget>> getList() async {
-    List<Widget> childs = [];
-    var storage = await PathProviderEx2.getStorageInfo();
-    var rootDir = storage[0].rootDir;
-    final File myFile = File('$rootDir/teknobay/data.json');
-    var jsonData = json.decode(myFile.readAsStringSync());
+    List<Widget> childWidgets = [];
 
-    for (var j = 0; j < jsonData.length; j++) {
-      if (jsonData[j][lang == "TR" ? 'Icerik_Baslik' : 'Icerik_KisaAciklama'] ==
-          widget.title) {
-        var newList = jsonData[j][lang == 'TR' ? 'Dosya' : 'DosyaEn']
-            .toString()
-            .split(',');
-        for (var z = 0; z < newList.length; z++) {
-          childs.add(
-            InkWell(
-              onTap: () {
-                setState(() {
-                  indexNumber = z;
-                  for (var i = 0; i < _chewieControllers.length; i++) {
-                    if (i != indexNumber) {
-                      _chewieControllers[i].pause();
-                    }
-                  }
-                  _chewieControllers[indexNumber].play();
-                });
-              },
-              child: Card(
-                color: Colors.orange,
-                child: ListTile(
-                  leading: const Icon(Icons.video_label_rounded),
-                  title: Text(newList[z].toString().split('/').last),
-                  trailing: const Icon(Icons.chevron_right),
-                ),
-              ),
+    for (var z = 0; z < widget.videos.length; z++) {
+      childWidgets.add(
+        InkWell(
+          onTap: () {
+            setState(() {
+              indexNumber = z;
+              for (var i = 0; i < _chewieControllers.length; i++) {
+                if (i != indexNumber) {
+                  _chewieControllers[i].pause();
+                }
+              }
+              _chewieControllers[indexNumber].play();
+            });
+          },
+          child: Card(
+            color: Colors.orange,
+            child: ListTile(
+              leading: const Icon(Icons.video_label_rounded),
+              title: Text(widget.videos[z]),
+              trailing: const Icon(Icons.chevron_right),
             ),
-          );
-        }
-      }
+          ),
+        ),
+      );
     }
-    return childs;
+    return childWidgets;
   }
 
   @override
@@ -186,16 +166,14 @@ class _VideoItemsState extends State<VideoItems> {
                         onTap: () {
                           setState(() {
                             _chewieControllers[indexNumber].pause();
-                            indexNumber = indexNumber - 1;
+                            indexNumber--;
                             _chewieControllers[indexNumber].play();
                           });
                         },
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.chevron_left,
-                              color: Colors.orange,
-                            ),
+                            const Icon(Icons.chevron_left,
+                                color: Colors.orange),
                             Text(
                               lang == 'TR' ? "Önceki Video" : "Previous Video",
                               style: const TextStyle(
@@ -207,21 +185,19 @@ class _VideoItemsState extends State<VideoItems> {
                           ],
                         ),
                       )
-                    : const Text(""),
-                betweenSpaceee,
+                    : const SizedBox.shrink(),
+                const SizedBox(width: 8),
                 indexNumber > 0
-                    ? const Text(
-                        "|",
-                        style: TextStyle(color: Colors.deepOrange),
-                      )
-                    : const Text(""),
-                betweenSpaceee,
+                    ? const Text("|",
+                        style: TextStyle(color: Colors.deepOrange))
+                    : const SizedBox.shrink(),
+                const SizedBox(width: 8),
                 indexNumber < _chewieControllers.length - 1
                     ? InkWell(
                         onTap: () {
                           setState(() {
                             _chewieControllers[indexNumber].pause();
-                            indexNumber = indexNumber + 1;
+                            indexNumber++;
                             _chewieControllers[indexNumber].play();
                           });
                         },
@@ -235,14 +211,12 @@ class _VideoItemsState extends State<VideoItems> {
                                 color: Colors.orange,
                               ),
                             ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: Colors.orange,
-                            ),
+                            const Icon(Icons.chevron_right,
+                                color: Colors.orange),
                           ],
                         ),
                       )
-                    : Container(),
+                    : const SizedBox.shrink(),
               ],
             ),
             Text(
@@ -285,42 +259,54 @@ class _VideoItemsState extends State<VideoItems> {
         backgroundColor: Colors.amber[100],
       ),
       body: SizedBox(
-        width: MediaQuery.of(context).size.width - 200,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: FutureBuilder(
-                future: getList(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text(snapshot.error.toString()));
-                  } else if (snapshot.hasData) {
-                    return ListView.builder(
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return snapshot.data![index];
+        width: widget.videos.isEmpty
+            ? MediaQuery.of(context).size.width
+            : MediaQuery.of(context).size.width - 200,
+        child: widget.videos.isEmpty
+            ? Center(
+                child: Text(
+                lang == 'TR'
+                    ? 'Bu kategoriye ait film bulunmamaktadır!'
+                    : 'There is no movie in this category!',
+                style: const TextStyle(
+                  fontSize: 30,
+                ),
+              ))
+            : Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: FutureBuilder(
+                      future: getList(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(child: Text(snapshot.error.toString()));
+                        } else if (snapshot.hasData) {
+                          return ListView.builder(
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) {
+                              return snapshot.data![index];
+                            },
+                          );
+                        } else {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
                       },
-                    );
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 4,
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height,
+                      child: _chewieControllers.isNotEmpty
+                          ? Chewie(controller: _chewieControllers[indexNumber])
+                          : const Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            betweenSpaceee,
-            Expanded(
-              flex: 4,
-              child: SizedBox(
-                height: 550,
-                width: 800,
-                child: _chewieControllers.isNotEmpty
-                    ? Chewie(controller: _chewieControllers[indexNumber])
-                    : const Center(child: CircularProgressIndicator()),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
