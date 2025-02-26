@@ -18,8 +18,6 @@ class VideoList extends StatefulWidget {
 
 class _VideoListState extends State<VideoList> {
   final String jsonUrl = "https://timboocafe.com/VideoGetir.aspx";
-  final String nasBaseUrl =
-      "http://192.168.1.4:8080/cgi-bin/Timboo Cafe/Videolar/";
   var basePath = "";
   var lang = "TR";
 
@@ -39,7 +37,7 @@ class _VideoListState extends State<VideoList> {
       String? ip = prefs.getString("IP");
       setState(() {
         basePath =
-            "http://$ip:8080/cgi-bin/filemanager/utilRequest.cgi/timbo-heidi_film_g260_k_aPlknEQI.png?sid=qm4l9b2e&func=get_viewer&source_path=%2FTimboo%20Cafe%2FVideolar&source_file=";
+            "http://$ip:8080/cgi-bin/filemanager/utilRequest.cgi/timbo-sungerbob-film-g314-473x582-xqsrti6q-film-g314-473x582-nav8lnzk_film_g314_k_IfRtfdyb.png?sid=l265fppc&func=get_viewer&source_path=%2FMultimedia%2FSamples&source_file=";
         lang = prefs.getString("lang")!;
         imageList.clear();
       });
@@ -63,14 +61,15 @@ class _VideoListState extends State<VideoList> {
 
   Future<void> _fetchFilesFromFtp() async {
     final FTPConnect ftpConnect =
-        FTPConnect("192.168.1.4", user: "admin", pass: "admin");
+        FTPConnect("192.168.1.5", user: "admin", pass: "admin");
 
     try {
       await ftpConnect.connect();
-      bool changedDirCafe = await ftpConnect.changeDirectory('Timboo Cafe');
+      bool changedDirCafe = await ftpConnect.changeDirectory('Multimedia');
       if (changedDirCafe) {
-        bool changedDirVideos = await ftpConnect.changeDirectory('Videolar');
+        bool changedDirVideos = await ftpConnect.changeDirectory('Samples');
         if (changedDirVideos) {
+          debugPrint('Videolar klasörüne geçildi.');
           List<FTPEntry> entries = await ftpConnect.listDirectoryContent();
 
           for (var jsonItem in jsonData) {

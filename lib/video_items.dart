@@ -30,7 +30,11 @@ class _VideoItemsState extends State<VideoItems> {
   String lang = "TR";
 
   void newMethod() async {
+    if (!mounted) return;
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
     setState(() {
       lang = prefs.getString("lang") ?? "TR";
     });
@@ -40,10 +44,15 @@ class _VideoItemsState extends State<VideoItems> {
     List<String> availableVideos = [];
 
     for (var video in widget.videos) {
+      if (!mounted) return;
       VideoPlayerController videoController = VideoPlayerController.networkUrl(
           Uri.parse("${widget.basePath}$video"));
       try {
         await videoController.initialize();
+        if (!mounted) {
+          videoController.dispose();
+          return;
+        }
         availableVideos.add(video);
         newVideoControllers.add(videoController);
         ChewieController chewieController = ChewieController(
@@ -81,6 +90,16 @@ class _VideoItemsState extends State<VideoItems> {
       }
     }
 
+    if (!mounted) {
+      for (var controller in newVideoControllers) {
+        controller.dispose();
+      }
+      for (var controller in newChewieControllers) {
+        controller.dispose();
+      }
+      return;
+    }
+
     if (availableVideos.isNotEmpty) {
       setState(() {
         _chewieControllers = newChewieControllers;
@@ -89,7 +108,7 @@ class _VideoItemsState extends State<VideoItems> {
       });
     } else {
       setState(() {
-        widget.videos = []; 
+        widget.videos = [];
       });
     }
   }
