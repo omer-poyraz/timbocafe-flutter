@@ -1,0 +1,2 @@
+/Users/dev1/Desktop/omer/timbocafe-flutter/android/app/.cxx/Debug/3n21o524/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+/Users/dev1/Desktop/omer/timbocafe-flutter/android/app/.cxx/Debug/3n21o524/armeabi-v7a/CMakeFiles/edit_cache.dir

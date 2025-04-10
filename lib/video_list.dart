@@ -35,9 +35,10 @@ class _VideoListState extends State<VideoList> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? ip = prefs.getString("IP");
+      String? sid = prefs.getString("sid");
       setState(() {
         basePath =
-            "http://$ip:8080/cgi-bin/filemanager/utilRequest.cgi/timbo-sungerbob-film-g314-473x582-xqsrti6q-film-g314-473x582-nav8lnzk_film_g314_k_IfRtfdyb.png?sid=l265fppc&func=get_viewer&source_path=%2FMultimedia%2FSamples&source_file=";
+            "http://$ip:8080/cgi-bin/filemanager/utilRequest.cgi/xxxxxxxxx?sid=$sid&func=get_viewer&source_path=%2FMultimedia%2FSamples&source_file=xxxxxxxxx";
         lang = prefs.getString("lang")!;
         imageList.clear();
       });
@@ -60,8 +61,20 @@ class _VideoListState extends State<VideoList> {
   }
 
   Future<void> _fetchFilesFromFtp() async {
-    final FTPConnect ftpConnect =
-        FTPConnect("192.168.1.5", user: "admin", pass: "admin");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? nasIp = prefs.getString("IP");
+
+    if (nasIp == null || nasIp.isEmpty) {
+      debugPrint("NAS IP adresi bulunamadı!");
+      return;
+    }
+
+    final FTPConnect ftpConnect = FTPConnect(
+      nasIp,
+      user: "admin",
+      pass: "admin",
+      timeout: 30000,
+    );
 
     try {
       await ftpConnect.connect();
@@ -78,11 +91,15 @@ class _VideoListState extends State<VideoList> {
 
             String imagePath;
             if (imageExists) {
-              imagePath = "$basePath$imageName";
+              imagePath = basePath;
+              imagePath = imagePath.replaceAll("xxxxxxxxx", imageName);
+              imagePath = imagePath.replaceAll("xxxxxxxxx", imageName);
             } else {
               imagePath =
                   'https://www.timboocafe.com/Site/Library/images/logo-b.png';
             }
+
+            debugPrint("Image Path: $imagePath");
 
             setState(() {
               imageList.add({
@@ -204,11 +221,25 @@ class _VideoListState extends State<VideoList> {
                           ),
                           child: Image.network(
                             videoImagePath,
+                            loadingBuilder: (BuildContext context, Widget child,
+                                ImageChunkEvent? loadingProgress) {
+                              if (loadingProgress == null) {
+                                return child;
+                              }
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          (loadingProgress.expectedTotalBytes ??
+                                              1)
+                                      : null,
+                                ),
+                              );
+                            },
                             errorBuilder: (BuildContext context, Object error,
                                 StackTrace? stackTrace) {
-                              return Image.asset(
-                                'assets/bg.png',
-                              );
+                              return Image.asset('assets/placeholder.png');
                             },
                           ),
                         ),

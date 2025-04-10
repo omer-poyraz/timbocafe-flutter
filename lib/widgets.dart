@@ -17,12 +17,13 @@ Widget get betweenSpaceee => const SizedBox(width: 30);
 Widget get betweenSpacee => const SizedBox(width: 20);
 Widget get betweenSpace => const SizedBox(width: 10);
 
-loginControl(BuildContext context, String nasIp, String userName,
+loginControl(BuildContext context, String nasIp, String sid, String userName,
     String password) async {
   if (userName == Api.userName) {
     if (password == Api.password) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString("IP", nasIp);
+      prefs.setString("sid", sid);
       prefs.setString('kullaniciadi', userName);
       prefs.setString('sifre', password);
 

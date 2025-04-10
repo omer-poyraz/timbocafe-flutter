@@ -45,8 +45,10 @@ class _VideoItemsState extends State<VideoItems> {
 
     for (var video in widget.videos) {
       if (!mounted) return;
-      VideoPlayerController videoController = VideoPlayerController.networkUrl(
-          Uri.parse("${widget.basePath}$video"));
+      var newVideo = widget.basePath.replaceAll("xxxxxxxxx", video);
+      var newVideo2 = newVideo.replaceAll("xxxxxxxxx", video);
+      VideoPlayerController videoController =
+          VideoPlayerController.networkUrl(Uri.parse(newVideo2));
       try {
         await videoController.initialize();
         if (!mounted) {
@@ -113,6 +115,65 @@ class _VideoItemsState extends State<VideoItems> {
     }
   }
 
+  Future<void> _showPasswordPopup(BuildContext context) async {
+    TextEditingController passwordController = TextEditingController();
+    String correctPassword = "1234";
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(lang == 'TR' ? "Tam Ekrandan Çık" : "Exit Fullscreen"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(lang == 'TR'
+                  ? "Tam ekrandan çıkmak için şifre girin:"
+                  : "Enter the password to exit fullscreen:"),
+              const SizedBox(height: 10),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: lang == 'TR' ? "Şifre" : "Password",
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(lang == 'TR' ? "İptal" : "Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (passwordController.text == correctPassword) {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                } else {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(lang == 'TR'
+                          ? "Hatalı şifre!"
+                          : "Incorrect password!"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: Text(lang == 'TR' ? "Onayla" : "Confirm"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -170,162 +231,172 @@ class _VideoItemsState extends State<VideoItems> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.amber[100],
-      appBar: AppBar(
-        foregroundColor: Colors.orange,
-        centerTitle: true,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                indexNumber > 0
-                    ? InkWell(
-                        onTap: () {
-                          setState(() {
-                            _chewieControllers[indexNumber].pause();
-                            indexNumber--;
-                            _chewieControllers[indexNumber].play();
-                          });
-                        },
-                        child: Row(
-                          children: [
-                            const Icon(Icons.chevron_left,
-                                color: Colors.orange),
-                            Text(
-                              lang == 'TR' ? "Önceki Video" : "Previous Video",
-                              style: const TextStyle(
-                                fontFamily: 'VAGRoundedStd',
-                                fontSize: 20,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-                const SizedBox(width: 8),
-                indexNumber > 0
-                    ? const Text("|",
-                        style: TextStyle(color: Colors.deepOrange))
-                    : const SizedBox.shrink(),
-                const SizedBox(width: 8),
-                indexNumber < _chewieControllers.length - 1
-                    ? InkWell(
-                        onTap: () {
-                          setState(() {
-                            _chewieControllers[indexNumber].pause();
-                            indexNumber++;
-                            _chewieControllers[indexNumber].play();
-                          });
-                        },
-                        child: Row(
-                          children: [
-                            Text(
-                              lang == 'TR' ? "Sonraki Video" : "Next Video",
-                              style: const TextStyle(
-                                fontFamily: 'VAGRoundedStd',
-                                fontSize: 20,
-                                color: Colors.orange,
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right,
-                                color: Colors.orange),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ],
-            ),
-            Text(
-              widget.title,
-              style: const TextStyle(
-                color: Colors.purple,
-                letterSpacing: 3,
-                fontFamily: 'VAGRoundedStd',
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-              ),
-            ),
-            InkWell(
-              onTap: () {
-                for (var controller in _videoControllers) {
-                  controller.dispose();
-                }
-                for (var controller in _chewieControllers) {
-                  controller.dispose();
-                }
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const VideoList()),
-                );
-              },
-              child: Row(
-                children: [
-                  const Icon(Icons.view_list_rounded, color: Colors.orange),
-                  const SizedBox(width: 10),
-                  Text(
-                    lang == 'TR' ? 'Video Listesi' : 'Video List',
-                    style: const TextStyle(color: Colors.orange),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return WillPopScope(
+      onWillPop: () async {
+        await _showPasswordPopup(context);
+        return false;
+      },
+      child: Scaffold(
         backgroundColor: Colors.amber[100],
-      ),
-      body: SizedBox(
-        width: widget.videos.isEmpty
-            ? MediaQuery.of(context).size.width
-            : MediaQuery.of(context).size.width - 200,
-        child: widget.videos.isEmpty
-            ? Center(
-                child: Text(
-                lang == 'TR'
-                    ? 'Bu kategoriye ait film bulunmamaktadır!'
-                    : 'There is no movie in this category!',
-                style: const TextStyle(
-                  fontSize: 30,
-                ),
-              ))
-            : Row(
+        appBar: AppBar(
+          foregroundColor: Colors.orange,
+          centerTitle: true,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: FutureBuilder(
-                      future: getList(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          return Center(child: Text(snapshot.error.toString()));
-                        } else if (snapshot.hasData) {
-                          return ListView.builder(
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              return snapshot.data![index];
-                            },
-                          );
-                        } else {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                      },
-                    ),
-                  ),
+                  indexNumber > 0
+                      ? InkWell(
+                          onTap: () {
+                            setState(() {
+                              _chewieControllers[indexNumber].pause();
+                              indexNumber--;
+                              _chewieControllers[indexNumber].play();
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              const Icon(Icons.chevron_left,
+                                  color: Colors.orange),
+                              Text(
+                                lang == 'TR'
+                                    ? "Önceki Video"
+                                    : "Previous Video",
+                                style: const TextStyle(
+                                  fontFamily: 'VAGRoundedStd',
+                                  fontSize: 20,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                   const SizedBox(width: 8),
-                  Expanded(
-                    flex: 4,
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height,
-                      child: _chewieControllers.isNotEmpty
-                          ? Chewie(controller: _chewieControllers[indexNumber])
-                          : const Center(child: CircularProgressIndicator()),
-                    ),
-                  ),
+                  indexNumber > 0
+                      ? const Text("|",
+                          style: TextStyle(color: Colors.deepOrange))
+                      : const SizedBox.shrink(),
+                  const SizedBox(width: 8),
+                  indexNumber < _chewieControllers.length - 1
+                      ? InkWell(
+                          onTap: () {
+                            setState(() {
+                              _chewieControllers[indexNumber].pause();
+                              indexNumber++;
+                              _chewieControllers[indexNumber].play();
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                lang == 'TR' ? "Sonraki Video" : "Next Video",
+                                style: const TextStyle(
+                                  fontFamily: 'VAGRoundedStd',
+                                  fontSize: 20,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right,
+                                  color: Colors.orange),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ],
               ),
+              Text(
+                widget.title,
+                style: const TextStyle(
+                  color: Colors.purple,
+                  letterSpacing: 3,
+                  fontFamily: 'VAGRoundedStd',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 25,
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  for (var controller in _videoControllers) {
+                    controller.dispose();
+                  }
+                  for (var controller in _chewieControllers) {
+                    controller.dispose();
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VideoList()),
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.view_list_rounded, color: Colors.orange),
+                    const SizedBox(width: 10),
+                    Text(
+                      lang == 'TR' ? 'Video Listesi' : 'Video List',
+                      style: const TextStyle(color: Colors.orange),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.amber[100],
+        ),
+        body: SizedBox(
+          width: widget.videos.isEmpty
+              ? MediaQuery.of(context).size.width
+              : MediaQuery.of(context).size.width - 200,
+          child: widget.videos.isEmpty
+              ? Center(
+                  child: Text(
+                  lang == 'TR'
+                      ? 'Bu kategoriye ait film bulunmamaktadır!'
+                      : 'There is no movie in this category!',
+                  style: const TextStyle(
+                    fontSize: 30,
+                  ),
+                ))
+              : Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: FutureBuilder(
+                        future: getList(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text(snapshot.error.toString()));
+                          } else if (snapshot.hasData) {
+                            return ListView.builder(
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                return snapshot.data![index];
+                              },
+                            );
+                          } else {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 4,
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height,
+                        child: _chewieControllers.isNotEmpty
+                            ? Chewie(
+                                controller: _chewieControllers[indexNumber])
+                            : const Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

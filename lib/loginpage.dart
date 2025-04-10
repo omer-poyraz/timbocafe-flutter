@@ -11,6 +11,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   late TextEditingController nasIpController = TextEditingController();
+  late TextEditingController sidController = TextEditingController();
   late TextEditingController userNameController = TextEditingController();
   late TextEditingController passwordController = TextEditingController();
 
@@ -63,6 +64,23 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       bottomSpace,
                       TextField(
+                        controller: sidController,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.security),
+                          labelText: 'SID',
+                          hintText: "nehehjbo",
+                          floatingLabelBehavior: FloatingLabelBehavior.auto,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: const BorderSide(
+                              color: Colors.amber,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      bottomSpace,
+                      TextField(
                         controller: userNameController,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.person),
@@ -103,10 +121,10 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor: Colors.purple,
                         ),
                         onPressed: () {
-                          // downloadFile();
                           loginControl(
                             context,
                             nasIpController.text,
+                            sidController.text,
                             userNameController.text,
                             passwordController.text,
                           );
