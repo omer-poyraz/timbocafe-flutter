@@ -41,6 +41,7 @@ class Chewie extends StatefulWidget {
 
 class ChewieState extends State<Chewie> {
   bool _isFullScreen = false;
+  // late TextEditingController passwordController = TextEditingController();
 
   bool get isControllerFullScreen => widget.controller.isFullScreen;
   late PlayerNotifier notifier;
@@ -75,11 +76,13 @@ class ChewieState extends State<Chewie> {
       _isFullScreen = isControllerFullScreen;
       await _pushFullScreenWidget(context);
     } else if (_isFullScreen) {
-      Navigator.of(
-        context,
-        rootNavigator: widget.controller.useRootNavigator,
-      ).pop();
-      _isFullScreen = false;
+      if (await _showPasswordPopup(context)) {
+        Navigator.of(
+          context,
+          rootNavigator: widget.controller.useRootNavigator,
+        ).pop();
+        _isFullScreen = false;
+      }
     }
   }
 
@@ -152,6 +155,63 @@ class ChewieState extends State<Chewie> {
     );
   }
 
+  Future<bool> _showPasswordPopup(BuildContext context) async {
+    TextEditingController passwordController = TextEditingController();
+    String correctPassword = "timbo987456";
+
+    bool result = await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Tam Ekrandan Çık"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Tam ekrandan çıkmak için şifre girin:"),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: "Şifre",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text("İptal"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (passwordController.text == correctPassword) {
+                      Navigator.of(context).pop(true);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Hatalı şifre!"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      Navigator.of(context).pop(false);
+                    }
+                  },
+                  child: const Text("Onayla"),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    return result;
+  }
+
   Future<dynamic> _pushFullScreenWidget(BuildContext context) async {
     final TransitionRoute<void> route = PageRouteBuilder<void>(
       pageBuilder: _fullScreenRoutePageBuilder,
@@ -172,8 +232,10 @@ class ChewieState extends State<Chewie> {
       _reInitializeControllers();
     }
 
-    _isFullScreen = false;
-    widget.controller.exitFullScreen();
+    // if (await _showPasswordPopup(context)) {
+      _isFullScreen = false;
+      widget.controller.exitFullScreen();
+    // }
 
     if (!widget.controller.allowedScreenSleep) {
       WakelockPlus.disable();
